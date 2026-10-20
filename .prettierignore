@@ -1,0 +1,8 @@
+node_modules
+.next
+docs/referencia
+docs/capturas
+public
+package-lock.json
+playwright-report
+test-results

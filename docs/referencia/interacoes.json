@@ -1,0 +1,134 @@
+[
+  {
+    "step": "desktop-controls",
+    "buttons": [
+      "",
+      "Pronto para morar",
+      "Apartamentos na planta",
+      "Conteúdos",
+      "Fale com a Cris",
+      "Fale com um especialista",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "Ver imóveis exclusivos"
+    ]
+  },
+  {
+    "step": "hover-menu",
+    "text": "Pronto para morar\nApartamentos na planta\nConteúdos\nFale com a Cris\n\nAqui você encontra o apartamento dos seus sonhos.\n\nImobiliária em Balneário Camboriú e região\n\nFale com um especialista\n\nViver bem e investir melhor começa na escolha certa. Encontre seu apartamento agora mesmo.\n\nBalneário Camboriú\nItajaí | Praia Brava\nItapema\n\ne\n\nPorto Belo\n\nNenhuma cidade encontrada.\n\nImóveis com alta procura\n\nItapema - Meia Praia\n\nApartamento de 197 m² com 3 suítes no Garden Square na Meia Praia em Itapema\n\nIM00098\n\n4 quartos | 4 suítes | 4 vagas | 197m²\n\nA partir de\n\nR$ 5.30 milhões\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\nOPORTUNIDADE\n\nBalneário Camboriú - Centro\n\nApartamento com 3 suítes e 2 vagas no Edifício DOM no Centro em Balneário Camboriú\n\nIM00168\n\n3 quartos | 3 suítes | 2 vagas | 150.73m²\n\nA partir de\n\nR$ 3.21 milhões\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\n\nBalneário Camboriú - Barra Sul\n\nCobertura com 4 suítes no Tonino Lamborghini Residences na Barra Sul em Balneário Camboriú\n\nIM00181\n\n4 quartos | 4 suítes | 4 vagas | 429m²\n\nA partir de\n\nR$ 35.00 milhões\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\n\nItajaí - Praia Brava\n\nApartamento com 2 Suítes no Brava Garden na Praia Brava em Itajaí\n\nIM00680\n\n2 quartos | 2 suítes | 1 vaga | 80m²\n\nA partir de\n\nR$ 1.50 milhão\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\nOPORTUNIDADE\n\nBalneário Camboriú - Centro\n\nApartamento com 3 suítes no Città di Vinci no Centro de Balneário Camboriú\n\nIM01475\n\n3 quartos | 3 suítes | 2 vagas | 143m²\n\nA partir de\n\nR$ 3.37 milhões\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\n\nItajaí - Praia Brava\n\nApartamento com 3 quartos no Brava Beach Aroeira na Praia Brava em Itajaí\n\nIM01715\n\n3 quartos | 1 suíte | 3 vagas | 142.74m²\n\nA partir de\n\nR$ 3.79 milhões\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\nOPORTUNIDADE\n\nItajaí - Praia Brava\n\nApartamento com 03 Suítes no Four Seasons na Praia Brava de Itajaí\n\nIM00152\n\n3 quartos | 3 suítes | 3 vagas | 157m²\n\nA partir de\n\nR$ 3.90 milhões\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\n\nItapema - Meia Praia\n\nApartamento com 3 Suítes no Edifício Vicenzo Residence na Meia Praia em Itapema\n\nIM01549\n\n3 quartos | 3 suítes | 3 vagas | 154m²\n\nA partir de\n\nR$ 2.20 milhões\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\nNem todo imóvel está disponível para todos. Explore a seleção que só a CRI oferece.\n\nConheça os imóveis exclusivos da CRI, selecionados pelo nosso time e fora do mercado aberto, com valores estratégicos e condições diferenciadas para viver bem e investir melhor.\n\nVer imóveis exclusivos\nPronto para morar\nApartamento à venda em Balneário Camboriú\nApartamento à venda em Itapema\nApartamento à venda em Porto Belo\nApartamento à venda na Praia Brava\nApartamento à venda em Itajaí\nApartamentos na planta\nBalneário Camboriú\nItapema\nPorto Belo\nPraia Brava\nItajaí\nConteúdos\nSobre a CRI\nBlog\nCarreira\nContato\nFale com a gente\n\nDe segunda a domingo, 9h às 19h.\n\nCopyright 2025. Todos os direitos autorais e direitos de propriedade intelectual em todos os logotipos, designs, textos, imagens e outros materiais apresentados nesse site pertencem a CRI Soluções Imobiliárias ou aparecem com a devida autorização do proprietário correspondente.\n\nItajaí | CRECI 3308j\n\nRua Delfim de Pádua Peixoto, 605, Praia Brava\n\nBalneário Camboriú | CRECI 3308j\n\nAvenida Brasil, 2300 - SL02, Centro\n\nItapema | CRECI 5385j\n\nRua 302, 103 - Castelo Branco\n\nDesenvolvido por"
+  },
+  {
+    "step": "mobile-controls",
+    "candidates": [
+      {
+        "text": "",
+        "aria": "Buscar imóveis",
+        "html": "<button type=\"submit\" aria-label=\"Buscar imóveis\" class=\"text-gray-400 text-sm cursor-pointer transition pointer-events-none opacity-100\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-search w-5 h-5 pointer-events-none text-gray-400\" aria-hidden=\"true\"><path d=\"m21 21-4.34-4.34\"></path><circle cx=\"11\" cy=\"11\" r=\"8\"></circle></svg></button>"
+      },
+      {
+        "text": "",
+        "aria": "Toggle menu",
+        "html": "<button class=\"lg:hidden p-2 text-gray-900 shrink-0 ml-auto\" aria-label=\"Toggle menu\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-menu w-6 h-6\" aria-hidden=\"true\"><path d=\"M4 5h16\"></path><path d=\"M4 12h16\"></path><path d=\"M4 19h16\"></path></svg></button>"
+      }
+    ]
+  },
+  {
+    "step": "mobile-menu",
+    "text": "Pronto para morar\nCIDADE\nBalneário Camboriú\nPraia Brava\nItapema\nPorto Belo\nItajaí\nCARACTERÍSTICA\nFrente mar\nQuadra Mar\nOportunidades\nExclusivos CRI\nApartamentos na planta\nCIDADE\nBalneário Camboriú\nPraia Brava\nItapema\nPorto Belo\nItajaí\nCARACTERÍSTICA\nFrente mar\nQuadra Mar\nOportunidades\nConteúdos\nCRI\nSobre nós\nBlog\nTrabalhe com a gente\nConverse com um especialista\n\nAqui você encontra o apartamento dos seus sonhos.\n\nImobiliária em Balneário Camboriú e região\n\nFale com um especialista\n\nViver bem e investir melhor começa na escolha certa.\nEncontre seu apartamento agora mesmo.\n\nBalneário Camboriú\n|\nItajaí | Praia Brava\nItapema\n\ne\n\nPorto Belo\nEncontre o seu apartamento ideal\n\nNenhuma cidade encontrada.\n\nImóveis com alta procura\n\nItapema - Meia Praia\n\nApartamento de 197 m² com 3 suítes no Garden Square na Meia Praia em Itapema\n\nIM00098\n\n4 quartos | 4 suítes | 4 vagas | 197m²\n\nA partir de\n\nR$ 5.30 milhões\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\nOPORTUNIDADE\n\nBalneário Camboriú - Centro\n\nApartamento com 3 suítes e 2 vagas no Edifício DOM no Centro em Balneário Camboriú\n\nIM00168\n\n3 quartos | 3 suítes | 2 vagas | 150.73m²\n\nA partir de\n\nR$ 3.21 milhões\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\n\nBalneário Camboriú - Barra Sul\n\nCobertura com 4 suítes no Tonino Lamborghini Residences na Barra Sul em Balneário Camboriú\n\nIM00181\n\n4 quartos | 4 suítes | 4 vagas | 429m²\n\nA partir de\n\nR$ 35.00 milhões\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\n\nItajaí - Praia Brava\n\nApartamento com 2 Suítes no Brava Garden na Praia Brava em Itajaí\n\nIM00680\n\n2 quartos | 2 suítes | 1 vaga | 80m²\n\nA partir de\n\nR$ 1.50 milhão\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\nOPORTUNIDADE\n\nBalneário Camboriú - Centro\n\nApartamento com 3 suítes no Città di Vinci no Centro de Balneário Camboriú\n\nIM01475\n\n3 quartos | 3 suítes | 2 vagas | 143m²\n\nA partir de\n\nR$ 3.37 milhões\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\n\nItajaí - Praia Brava\n\nApartamento com 3 quartos no Brava Beach Aroeira na Praia Brava em Itajaí\n\nIM01715\n\n3 quartos | 1 suíte | 3 vagas | 142.74m²\n\nA partir de\n\nR$ 3.79 milhões\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\nOPORTUNIDADE\n\nItajaí - Praia Brava\n\nApartamento com 03 Suítes no Four Seasons na Praia Brava de Itajaí\n\nIM00152\n\n3 quartos | 3 suítes | 3 vagas | 157m²\n\nA partir de\n\nR$ 3.90 milhões\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\n\nItapema - Meia Praia\n\nApartamento com 3 Suítes no Edifício Vicenzo Residence na Meia Praia em Itapema\n\nIM01549\n\n3 quartos | 3 suítes | 3 vagas | 154m²\n\nA partir de\n\nR$ 2.20 milhões\n\nAVISE-ME SE O PREÇO MUDAR\nVer apartamento\nNem todo imóvel está disponível para todos. Explore a seleção que só a CRI oferece.\n\nConheça os imóveis exclusivos da CRI, selecionados pelo nosso time e fora do mercado aberto, com valores estratégicos e condições diferenciadas para viver bem e investir melhor.\n\nVer imóveis exclusivos\nPronto para morar\nApartamento à venda em Balneário Camboriú\nApartamento à venda em Itapema\nApartamento à venda em Porto Belo\nApartamento à venda na Praia Brava\nApartamento à venda em Itajaí\nApartamentos na planta\nBalneário Camboriú\nItapema\nPorto Belo\nPraia Brava\nItajaí\nConteúdos\nSobre a CRI\nBlog\nCarreira\nContato\nFale com a gente\n\nDe segunda a domingo, 9h às 19h.\n\nCopyright 2025. Todos os direitos autorais e direitos de propriedade intelectual em todos os logotipos, designs, textos, imagens e outros materiais apresentados nesse site pertencem a CRI Soluções Imobiliárias ou aparecem com a devida autorização do proprietário correspondente.\n\nItajaí | CRECI 3308j\n\nRua Delfim de Pádua Peixoto, 605, Praia Brava\n\nBalneário Camboriú | CRECI 3308j\n\nAvenida Brasil, 2300 - SL02, Centro\n\nItapema | CRECI 5385j\n\nRua 302, 103 - Castelo Branco\n\nDesenvolvido por"
+  },
+  {
+    "step": "search-inputs",
+    "inputs": [
+      {
+        "placeholder": "Onde você quer mor",
+        "name": "",
+        "type": "text"
+      },
+      {
+        "placeholder": "Onde você quer mor",
+        "name": "",
+        "type": "text"
+      },
+      {
+        "placeholder": "Onde você quer mor",
+        "name": "",
+        "type": "text"
+      },
+      {
+        "placeholder": "R$ 0",
+        "name": "",
+        "type": "text"
+      },
+      {
+        "placeholder": "R$ 0",
+        "name": "",
+        "type": "text"
+      },
+      {
+        "placeholder": "",
+        "name": "",
+        "type": "checkbox"
+      },
+      {
+        "placeholder": "",
+        "name": "",
+        "type": "checkbox"
+      },
+      {
+        "placeholder": "0 m²",
+        "name": "",
+        "type": "text"
+      },
+      {
+        "placeholder": "0 m²",
+        "name": "",
+        "type": "text"
+      },
+      {
+        "placeholder": "",
+        "name": "",
+        "type": "checkbox"
+      },
+      {
+        "placeholder": "",
+        "name": "",
+        "type": "checkbox"
+      },
+      {
+        "placeholder": "",
+        "name": "",
+        "type": "checkbox"
+      },
+      {
+        "placeholder": "",
+        "name": "",
+        "type": "checkbox"
+      },
+      {
+        "placeholder": "",
+        "name": "",
+        "type": "checkbox"
+      },
+      {
+        "placeholder": "",
+        "name": "",
+        "type": "checkbox"
+      }
+    ]
+  }
+]

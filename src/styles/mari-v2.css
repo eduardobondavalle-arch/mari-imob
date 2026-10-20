@@ -1,0 +1,542 @@
+.kanban {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  padding: 12px 0 28px;
+  align-items: flex-start;
+}
+.kanban-column {
+  flex: 0 0 310px;
+  background: #edf1ee;
+  border: 1px solid #dce3dd;
+  border-radius: 14px;
+  padding: 14px;
+  min-height: 340px;
+}
+.kanban-column > header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  padding-bottom: 14px;
+}
+.kanban-column h2 {
+  font-family: inherit;
+  font-size: 16px;
+  margin: 0;
+  flex: 1;
+}
+.kanban-column h2 small {
+  background: white;
+  padding: 4px 8px;
+  border-radius: 20px;
+}
+.kanban-card {
+  background: white;
+  padding: 16px;
+  border: 1px solid #e0e5e0;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  box-shadow: 0 3px 9px #142f2010;
+}
+.kanban-card[draggable="true"] {
+  cursor: grab;
+}
+.kanban-card p,
+.kanban-card small {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.lead-open {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  gap: 8px;
+  background: none;
+  border: 0;
+  padding: 0;
+  width: 100%;
+  cursor: pointer;
+  color: inherit;
+}
+.lead-open strong {
+  font-size: 15px;
+}
+.lead-open span {
+  font-size: 12px;
+  color: #59685c;
+}
+.card-movement {
+  display: flex;
+  gap: 3px;
+  margin-top: 12px;
+}
+.card-movement select {
+  min-width: 0;
+  flex: 1;
+  font-size: 12px;
+}
+.kanban-empty {
+  color: #65766a;
+  font-size: 13px;
+  text-align: center;
+  padding: 45px 5px;
+}
+.upcoming-event {
+  padding: 8px;
+  background: #eef4ed;
+  border-radius: 6px;
+}
+.crm-board-wrap .admin-toolbar > input {
+  max-width: 380px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 15px 0;
+}
+.calendar-toolbar label {
+  max-width: 200px;
+}
+.calendar-grid {
+  display: grid;
+  gap: 1px;
+  background: #dbe1db;
+  border: 1px solid #dbe1db;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.calendar-month {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.calendar-week {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  overflow-x: auto;
+}
+.calendar-day {
+  background: #fff;
+  min-height: 150px;
+  padding: 8px;
+  min-width: 0;
+}
+.calendar-date {
+  border: 0;
+  background: none;
+  color: #234a35;
+  font-weight: 600;
+  padding: 8px 2px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  font-size: 12px;
+}
+.calendar-event {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: left;
+  border: 0;
+  background: #e9f2ea;
+  color: #264d38;
+  border-left: 3px solid #62856d;
+  border-radius: 5px;
+  padding: 9px;
+  font-size: 11px;
+  width: 100%;
+  margin: 5px 0;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.calendar-event.cancelled {
+  opacity: 0.6;
+  text-decoration: line-through;
+  background: #f0efef;
+  border-color: #999;
+}
+.calendar-slot {
+  display: block;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid #eee;
+  padding: 15px 4px;
+  width: 100%;
+  text-align: left;
+  color: #6e7971;
+  font-size: 11px;
+  cursor: pointer;
+}
+.calendar-slot:hover {
+  background: #edf4ed;
+}
+.calendar-day.calendar-grid {
+  grid-template-columns: 1fr;
+}
+.calendar-grid.calendar-day > .calendar-day {
+  min-height: 600px;
+}
+.event-list {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+}
+.lead-extras {
+  margin: 30px 0;
+  border-top: 1px solid #e0e5df;
+  padding-top: 12px;
+}
+.lead-extras .agenda {
+  margin-top: 36px;
+}
+.lead-extras .request-card {
+  margin: 12px 0;
+}
+.selection-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  margin: 12px 0;
+}
+.preserve-lines {
+  white-space: pre-wrap;
+}
+.property-picker {
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid #dfe5df;
+  border-radius: 10px;
+}
+.property-picker label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
+  padding: 14px;
+  border-bottom: 1px solid #edf0ed;
+  cursor: pointer;
+}
+.property-picker input,
+.filter-checks input,
+.checkbox-label input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: #234b38;
+}
+.property-picker strong,
+.property-picker small {
+  display: block;
+}
+.property-picker small {
+  margin-top: 6px;
+}
+.conflict-box {
+  padding: 18px;
+  border: 1px solid #c39f64;
+  background: #fff7e9;
+  border-radius: 8px;
+}
+.conflict-box p {
+  font-size: 13px;
+}
+.filter-drawer fieldset {
+  border: 0;
+  border-top: 1px solid #e0e5df;
+  margin-top: 24px;
+  padding: 18px 0;
+}
+.filter-drawer legend {
+  font-weight: 600;
+  font-size: 14px;
+}
+.filter-checks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.filter-checks label,
+.checkbox-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.filter-actions {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 15px 0;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  border-top: 1px solid #ddd;
+}
+.advanced-filter-button {
+  margin-bottom: 20px;
+}
+.trade-badge {
+  background: #234b38 !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+.trade-notice {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  background: #edf3e9;
+  color: #294931;
+  font-size: 13px;
+}
+.selection-intro {
+  padding: 24px 0;
+}
+.selection-strip {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 10px 0 28px;
+  scroll-margin-top: 110px;
+}
+.selection-strip > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  flex: 0 0 290px;
+  padding: 12px;
+  border: 1px solid #dedfd8;
+  border-radius: 14px;
+  background: white;
+  cursor: pointer;
+  color: inherit;
+}
+.selection-strip > button.active {
+  border-color: #315b43;
+  background: #f0f5ed;
+  box-shadow: inset 0 0 0 1px #315b43;
+}
+.selection-strip img {
+  border-radius: 9px;
+  object-fit: cover;
+  width: 82px;
+  height: 65px;
+}
+.selection-strip span {
+  min-width: 0;
+}
+.selection-strip strong {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.selection-strip small {
+  display: block;
+  font-size: 10px;
+  margin-top: 6px;
+  color: #6a736b;
+}
+.selection-hero {
+  position: relative;
+  min-height: 500px;
+  height: 64vh;
+  max-height: 760px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #233c2c;
+}
+.selection-hero > img {
+  object-fit: cover;
+}
+.selection-hero:after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, #102717d9, transparent 90%);
+}
+.selection-hero-copy {
+  position: absolute;
+  z-index: 1;
+  bottom: 0;
+  left: 0;
+  padding: 40px;
+  color: white;
+  max-width: 850px;
+}
+.selection-hero-copy h2 {
+  font-size: clamp(32px, 4.5vw, 66px);
+  line-height: 1.1;
+  color: white;
+  margin: 16px 0;
+}
+.selection-hero-copy p {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.selection-hero-copy span {
+  font-size: 15px;
+}
+.selection-broker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 28px 10px;
+  border-bottom: 1px solid #ddd;
+}
+.selection-broker > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.selection-broker strong {
+  font-size: 21px;
+}
+.selection-broker span {
+  font-size: 12px;
+}
+.selection-presentation > .property-detail {
+  margin: 30px 0;
+}
+.selection-other {
+  padding: 40px 0;
+}
+.selection-other-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+.selection-other-grid > button {
+  border: 1px solid #e0e2db;
+  border-radius: 13px;
+  overflow: hidden;
+  background: #fafbf7;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+.selection-other-grid img {
+  width: 100%;
+  height: 230px;
+  object-fit: cover;
+}
+.selection-other-grid span {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+}
+.selection-other-grid small {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #526c58;
+}
+.selection-other-grid strong {
+  font-size: 16px;
+  line-height: 1.5;
+}
+.selection-other-grid em {
+  font-size: 12px;
+  color: #315b43;
+  font-style: normal;
+}
+@media (max-width: 1100px) {
+  .calendar-month {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .calendar-week {
+    grid-template-columns: repeat(7, 160px);
+  }
+  .selection-other-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 650px) {
+  .kanban-column {
+    flex-basis: 280px;
+  }
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .calendar-month {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .calendar-day {
+    min-height: 120px;
+  }
+  .calendar-toolbar {
+    gap: 6px;
+  }
+  .calendar-toolbar label {
+    max-width: 150px;
+  }
+  .filter-checks {
+    grid-template-columns: 1fr;
+  }
+  .selection-hero {
+    min-height: 390px;
+    height: 60vh;
+    border-radius: 10px;
+  }
+  .selection-hero-copy {
+    padding: 22px;
+  }
+  .selection-broker {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .selection-other-grid {
+    grid-template-columns: 1fr;
+  }
+  .selection-other-grid img {
+    height: 240px;
+  }
+  .selection-strip > button {
+    flex-basis: 260px;
+  }
+  .lead-extras .admin-toolbar {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .property-picker label {
+    font-size: 12px;
+  }
+  .crm-board-wrap .admin-toolbar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+.m-modal.m-filter-modal {
+  position: fixed;
+  inset: 0 0 0 auto;
+  margin: 0;
+  width: min(600px, 100vw);
+  height: 100dvh;
+  max-height: 100dvh;
+  border-radius: 0;
+  max-width: 100vw;
+}
+.m-filter-modal .modal-bar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: white;
+}
+.advanced-filter-button {
+  margin-top: 18px;
+}

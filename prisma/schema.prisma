@@ -1,0 +1,275 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Admin {
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  passwordHash       String
+  mustChangePassword Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  sessions           Session[]
+  comments           LeadComment[]
+  appointments       Appointment[]
+}
+
+model Lead {
+  id              String           @id @default(cuid())
+  firstName       String
+  phone           String           @unique
+  phoneVerifiedAt DateTime?
+  source          String
+  consentAt       DateTime?
+  createdAt       DateTime         @default(now())
+  lastActivityAt  DateTime         @default(now())
+  selection       Selection?       @relation("ClientSelection")
+  selections      Selection[]      @relation("LeadSelections")
+  stageId         String           @default("stage-new-lead")
+  stage           LeadStage        @relation(fields: [stageId], references: [id], onDelete: Restrict)
+  position        Int              @default(0)
+  comments        LeadComment[]
+  appointments    Appointment[]
+  sessions        Session[]
+  requests        ContactRequest[]
+  @@index([createdAt])
+  @@index([firstName])
+  @@index([stageId, position])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  adminId   String?
+  leadId    String?
+  admin     Admin?   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  lead      Lead?    @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  @@index([expiresAt])
+}
+
+model OtpChallenge {
+  id         String   @id @default(cuid())
+  phone      String
+  codeHash   String
+  attempts   Int      @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+  @@index([phone, createdAt])
+}
+
+model RateLimit {
+  key       String   @id
+  count     Int      @default(1)
+  expiresAt DateTime
+  @@index([expiresAt])
+}
+
+model Property {
+  id           String           @id @default(cuid())
+  code         String           @unique
+  slug         String           @unique
+  title        String
+  headline     String           @default("")
+  purpose      String
+  type         String
+  status       String           @default("draft")
+  featured     Boolean          @default(false)
+  price        Decimal?         @db.Decimal(14, 2)
+  city         String
+  cityId       String?
+  municipality City?            @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  neighborhood String
+  publicAddress String          @default("")
+  privateAddress String         @default("")
+  description  String
+  videoUrl     String           @default("")
+  bedrooms     Int?
+  suites       Int?
+  bathrooms    Int?
+  parking      Int?
+  area         Float?
+  categoryId   String?
+  situationId  String?
+  category     Taxonomy?        @relation("category", fields: [categoryId], references: [id], onDelete: SetNull)
+  situation    Taxonomy?        @relation("situation", fields: [situationId], references: [id], onDelete: SetNull)
+  images       Media[]
+  tags         Tag[]
+  values       PropertyValue[]
+  selections   SelectionItem[]
+  requests     ContactRequest[]
+  appointments Appointment[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  @@index([status, purpose, featured])
+  @@index([city, neighborhood, type])
+  @@index([price])
+  @@index([cityId])
+}
+
+model Media {
+  id         String    @id @default(cuid())
+  key        String    @unique
+  alt        String
+  width      Int
+  height     Int
+  size       Int
+  position   Int       @default(0)
+  propertyId String?
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+  @@index([propertyId, position])
+}
+
+model Tag {
+  id         String     @id @default(cuid())
+  name       String     @unique
+  key        String?    @unique
+  properties Property[]
+}
+
+model Taxonomy {
+  id         String     @id @default(cuid())
+  kind       String
+  name       String
+  categories Property[] @relation("category")
+  situations Property[] @relation("situation")
+  @@unique([kind, name])
+}
+
+model CustomField {
+  id         String          @id @default(cuid())
+  label      String
+  type       String
+  required   Boolean         @default(false)
+  public     Boolean         @default(true)
+  filterable Boolean         @default(false)
+  archived   Boolean         @default(false)
+  options    FieldOption[]
+  values     PropertyValue[]
+  createdAt  DateTime        @default(now())
+}
+
+model FieldOption {
+  id      String      @id @default(cuid())
+  value   String
+  fieldId String
+  field   CustomField @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  @@unique([fieldId, value])
+}
+
+model PropertyValue {
+  propertyId String
+  fieldId    String
+  value      Json
+  property   Property    @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  field      CustomField @relation(fields: [fieldId], references: [id], onDelete: Restrict)
+  @@id([propertyId, fieldId])
+  @@index([fieldId])
+}
+
+model Selection {
+  id          String          @id @default(cuid())
+  leadId      String
+  clientLeadId String?         @unique
+  clientLead  Lead?           @relation("ClientSelection", fields: [clientLeadId], references: [id], onDelete: Cascade)
+  title       String          @default("Minha seleção")
+  origin      String          @default("client")
+  revision    Int             @default(0)
+  publicToken String          @unique @default(uuid())
+  lead        Lead            @relation("LeadSelections", fields: [leadId], references: [id], onDelete: Cascade)
+  items       SelectionItem[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  @@index([leadId])
+}
+
+model SelectionItem {
+  selectionId String
+  propertyId  String
+  selection   Selection @relation(fields: [selectionId], references: [id], onDelete: Cascade)
+  property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  position    Int      @default(0)
+  @@id([selectionId, propertyId])
+}
+
+model ContactRequest {
+  id         String    @id @default(cuid())
+  leadId     String
+  propertyId String?
+  message    String    @default("")
+  status     String    @default("new")
+  lead       Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  createdAt  DateTime  @default(now())
+  @@index([leadId, createdAt])
+}
+
+model SiteSettings {
+  id          String   @id @default("main")
+  published   Json
+  draft       Json?
+  revision    Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
+model City {
+  id String @id
+  name String @unique
+  state String @default("SC")
+  properties Property[]
+}
+
+model LeadStage {
+  id String @id @default(cuid())
+  name String
+  position Int @default(0)
+  isDefault Boolean @default(false)
+  leads Lead[]
+}
+
+model LeadComment {
+  id String @id @default(cuid())
+  text String
+  leadId String
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  authorId String
+  author Admin @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([leadId, createdAt])
+}
+
+model AppointmentType {
+  id String @id
+  name String
+  appointments Appointment[]
+}
+
+model Appointment {
+  id String @id @default(cuid())
+  title String
+  description String @default("")
+  startsAt DateTime @db.Timestamptz(3)
+  endsAt DateTime @db.Timestamptz(3)
+  status String @default("scheduled")
+  typeId String
+  type AppointmentType @relation(fields: [typeId], references: [id], onDelete: Restrict)
+  leadId String?
+  lead Lead? @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  propertyId String?
+  property Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  authorId String
+  author Admin @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([startsAt, endsAt])
+  @@index([leadId, startsAt])
+}

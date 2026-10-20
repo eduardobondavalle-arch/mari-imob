@@ -1,0 +1,127 @@
+import { z } from "zod";
+export function normalizePhone(value: string) {
+  let digits = value.replace(/\D/g, "");
+  if (digits.length === 10 || digits.length === 11) digits = `55${digits}`;
+  if (!/^55[1-9]\d(?:[2-5]\d{7}|9\d{8})$/.test(digits))
+    throw new Error("Informe um telefone brasileiro válido com DDD.");
+  return digits;
+}
+export const phoneSchema = z
+  .string()
+  .max(30)
+  .transform((v, ctx) => {
+    try {
+      return normalizePhone(v);
+    } catch {
+      ctx.addIssue({
+        code: "custom",
+        message: "Informe um telefone válido com DDD.",
+      });
+      return z.NEVER;
+    }
+  });
+export const identitySchema = z.object({
+  firstName: z.string().trim().min(2).max(60),
+  phone: phoneSchema,
+  consent: z.literal(true),
+  propertyId: z.string().max(100).optional(),
+});
+const optionalNumber = z.number().finite().min(0).max(1000000).nullable();
+export const propertySchema = z.object({
+  title: z.string().trim().min(5).max(180),
+  headline: z.string().trim().max(220).default(""),
+  purpose: z.enum(["sale", "rent", "season"]),
+  type: z.string().trim().min(2).max(60),
+  status: z.enum(["draft", "published", "hidden", "sold", "rented"]),
+  featured: z.boolean(),
+  price: z.number().finite().min(0).max(999999999999).nullable(),
+  city: z.string().trim().min(2).max(100),
+  neighborhood: z.string().trim().min(2).max(100),
+  publicAddress: z.string().trim().max(250).default(""),
+  privateAddress: z.string().trim().max(300).default(""),
+  description: z.string().trim().min(10).max(20000),
+  videoUrl: z
+    .union([
+      z.literal(""),
+      z
+        .url()
+        .refine((v) => /^https:\/\//.test(v), "Utilize um endereço HTTPS."),
+    ])
+    .default(""),
+  bedrooms: optionalNumber.refine((v) => v === null || Number.isInteger(v)),
+  suites: optionalNumber.refine((v) => v === null || Number.isInteger(v)),
+  bathrooms: optionalNumber.refine((v) => v === null || Number.isInteger(v)).default(null),
+  parking: optionalNumber.refine((v) => v === null || Number.isInteger(v)),
+  area: optionalNumber,
+  categoryId: z.string().nullable().default(null),
+  situationId: z.string().nullable().default(null),
+  tagIds: z.array(z.string()).max(30),
+  imageIds: z.array(z.string()).max(40),
+  customValues: z.record(
+    z.string(),
+    z.union([
+      z.string().max(10000),
+      z.number().finite(),
+      z.boolean(),
+      z.array(z.string().max(100)).max(100),
+      z.null(),
+    ]),
+  ),
+});
+export const fieldSchema = z
+  .object({
+    label: z.string().trim().min(2).max(80),
+    type: z.enum([
+      "text",
+      "textarea",
+      "number",
+      "money",
+      "boolean",
+      "select",
+      "multiselect",
+      "date",
+    ]),
+    required: z.boolean(),
+    public: z.boolean(),
+    filterable: z.boolean(),
+    options: z.array(z.string().trim().min(1).max(100)).max(100),
+  })
+  .refine((v) => !v.filterable || v.public, "Um filtro precisa ser público.")
+  .refine(
+    (v) => !["select", "multiselect"].includes(v.type) || v.options.length > 0,
+    "Adicione as opções do campo.",
+  );
+const imageUrl = z
+  .string()
+  .max(300)
+  .refine(
+    (v) =>
+      v === "" ||
+      /^\/media\/[a-f0-9-]+\.webp$/.test(v) ||
+      /^\/brand\/[a-z0-9-]+\.(?:png|webp)$/.test(v) ||
+      v === "/images/coast.png",
+    "Use uma imagem enviada pelo painel.",
+  );
+export const contentSchema = z.object({
+  brandName: z.string().trim().min(1).max(60),
+  logo: imageUrl,
+  favicon: imageUrl,
+  primaryColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/),
+  heroImage: imageUrl,
+  heroTitle: z.string().min(1).max(180),
+  heroSubtitle: z.string().max(500),
+  featuredTitle: z.string().min(1).max(180),
+  aboutTitle: z.string().min(1).max(180),
+  aboutText: z.string().max(5000),
+  aboutImage: imageUrl,
+  contactTitle: z.string().min(1).max(200),
+  footerText: z.string().max(1000),
+  whatsapp: z.string().regex(/^55[1-9]\d\d{8,9}$/, "Informe DDI, DDD e telefone, somente números."),
+  instagram: z.union([
+    z.literal(""),
+    z.url().refine((v) => new URL(v).protocol === "https:"),
+  ]),
+  creci: z.string().max(100),
+  professionalInfo: z.string().max(500),
+});

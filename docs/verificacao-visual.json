@@ -1,0 +1,158 @@
+[
+  {
+    "width": 1440,
+    "name": "inicio",
+    "overflow": false,
+    "brokenImages": [],
+    "violations": []
+  },
+  {
+    "width": 1440,
+    "name": "busca",
+    "overflow": false,
+    "brokenImages": [],
+    "violations": []
+  },
+  {
+    "width": 1440,
+    "name": "detalhe",
+    "overflow": false,
+    "brokenImages": [],
+    "violations": []
+  },
+  {
+    "width": 1440,
+    "name": "contato",
+    "overflow": false,
+    "brokenImages": [],
+    "violations": []
+  },
+  {
+    "width": 1440,
+    "name": "sobre",
+    "overflow": false,
+    "brokenImages": [],
+    "violations": []
+  },
+  {
+    "width": 1440,
+    "name": "proprietarios",
+    "overflow": false,
+    "brokenImages": [],
+    "violations": []
+  },
+  {
+    "width": 390,
+    "name": "inicio",
+    "overflow": false,
+    "brokenImages": [],
+    "violations": []
+  },
+  {
+    "width": 390,
+    "name": "busca",
+    "overflow": false,
+    "brokenImages": [],
+    "violations": []
+  },
+  {
+    "width": 390,
+    "name": "detalhe",
+    "overflow": false,
+    "brokenImages": [],
+    "violations": []
+  },
+  {
+    "width": 390,
+    "name": "contato",
+    "overflow": false,
+    "brokenImages": [],
+    "violations": []
+  },
+  {
+    "width": 390,
+    "name": "sobre",
+    "overflow": false,
+    "brokenImages": [],
+    "violations": []
+  },
+  {
+    "width": 390,
+    "name": "proprietarios",
+    "overflow": false,
+    "brokenImages": [],
+    "violations": []
+  },
+  {
+    "width": 360,
+    "name": "inicio",
+    "overflow": false,
+    "brokenImages": []
+  },
+  {
+    "width": 360,
+    "name": "busca",
+    "overflow": false,
+    "brokenImages": []
+  },
+  {
+    "width": 360,
+    "name": "detalhe",
+    "overflow": false,
+    "brokenImages": []
+  },
+  {
+    "width": 360,
+    "name": "contato",
+    "overflow": false,
+    "brokenImages": []
+  },
+  {
+    "width": 360,
+    "name": "sobre",
+    "overflow": false,
+    "brokenImages": []
+  },
+  {
+    "width": 360,
+    "name": "proprietarios",
+    "overflow": false,
+    "brokenImages": []
+  },
+  {
+    "width": 768,
+    "name": "inicio",
+    "overflow": false,
+    "brokenImages": []
+  },
+  {
+    "width": 768,
+    "name": "busca",
+    "overflow": false,
+    "brokenImages": []
+  },
+  {
+    "width": 768,
+    "name": "detalhe",
+    "overflow": false,
+    "brokenImages": []
+  },
+  {
+    "width": 768,
+    "name": "contato",
+    "overflow": false,
+    "brokenImages": []
+  },
+  {
+    "width": 768,
+    "name": "sobre",
+    "overflow": false,
+    "brokenImages": []
+  },
+  {
+    "width": 768,
+    "name": "proprietarios",
+    "overflow": false,
+    "brokenImages": []
+  }
+]
