@@ -155,11 +155,7 @@ export function PropertyCard({
         <div className="listing-bottom">
           <div>
             <small>
-              {p.purpose === "rent"
-                ? "Locação mensal"
-                : p.purpose === "season"
-                  ? "Temporada · valor anunciado"
-                  : "Valor do imóvel"}
+              {p.purpose === "rent" ? "Locação mensal" : "Valor do imóvel"}
             </small>
             <strong>{priceLabel(p.price)}</strong>
           </div>

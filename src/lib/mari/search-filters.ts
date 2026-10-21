@@ -4,7 +4,10 @@ export function catalogWhere(
   params: URLSearchParams,
   fields: Field[],
 ): Prisma.PropertyWhereInput {
-  const and: Prisma.PropertyWhereInput[] = [{ status: "published" }];
+  const and: Prisma.PropertyWhereInput[] = [
+    { status: "published" },
+    { purpose: { in: ["sale", "rent"] } },
+  ];
   for (const key of [
     "purpose",
     "cityId",
@@ -15,7 +18,12 @@ export function catalogWhere(
     "situationId",
   ] as const) {
     if (key === "city" && params.get("cityId")) continue;
-    if (params.get(key)) and.push({ [key]: params.get(key)!.slice(0, 100) });
+    const value = params.get(key)?.slice(0, 100);
+    if (key === "purpose") {
+      if (value === "sale" || value === "rent") and.push({ purpose: value });
+      continue;
+    }
+    if (value) and.push({ [key]: value });
   }
   if (params.get("q"))
     and.push({

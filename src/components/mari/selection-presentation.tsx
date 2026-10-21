@@ -218,7 +218,7 @@ export function SelectionPresentation({
 
         <div className="cri-price-actions">
           <div className="cri-price-display">
-            <small>{active.purpose === "rent" ? "Locação mensal" : active.purpose === "season" ? "Temporada" : "Valor do imóvel"}</small>
+            <small>{active.purpose === "rent" ? "Locação mensal" : "Valor do imóvel"}</small>
             <strong>{priceLabel(active.price)}</strong>
           </div>
           <a

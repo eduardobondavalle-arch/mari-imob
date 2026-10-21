@@ -98,7 +98,7 @@ export async function searchCatalog(params: URLSearchParams) {
     take: pageSize,
   });
   const locations = await db.property.findMany({
-    where: { status: "published" },
+    where: { status: "published", purpose: { in: ["sale", "rent"] } },
     select: { city: true, cityId: true, neighborhood: true, type: true },
     distinct: ["city", "neighborhood", "type"],
   });
@@ -117,7 +117,7 @@ export async function searchCatalog(params: URLSearchParams) {
 }
 export async function getListing(slug: string) {
   const row = await db.property.findFirst({
-    where: { slug, status: "published" },
+    where: { slug, status: "published", purpose: { in: ["sale", "rent"] } },
     include: listingInclude,
   });
   return row ? listingDto(row) : null;

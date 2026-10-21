@@ -85,7 +85,6 @@ export type ClientState = {
 export const purposes: Record<string, string> = {
   sale: "Comprar",
   rent: "Alugar",
-  season: "Temporada",
 };
 export const statuses: Record<string, string> = {
   draft: "Rascunho",

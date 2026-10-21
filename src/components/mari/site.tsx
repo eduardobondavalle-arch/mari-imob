@@ -53,7 +53,6 @@ const links = [
   ["Início", "/"],
   ["Comprar", "/buscar?purpose=sale"],
   ["Alugar", "/buscar?purpose=rent"],
-  ["Temporada", "/buscar?purpose=season"],
   ["Imóveis", "/buscar"],
   ["Consultoria", "/consultoria"],
   ["Contato", "/contato"],

@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 const steps = [
-  ["Objetivo", "O que você quer conquistar com esse imóvel?", ["Comprar para morar", "Ter uma segunda residência ou imóvel de lazer", "Investir para valorização ou revenda", "Gerar renda com locação anual", "Gerar renda com locação por temporada", "Diversificar patrimônio", "Ainda estou avaliando"]],
+  ["Objetivo", "O que você quer conquistar com esse imóvel?", ["Comprar para morar", "Ter uma segunda residência ou imóvel de lazer", "Investir para valorização ou revenda", "Gerar renda com locação anual", "Diversificar patrimônio", "Ainda estou avaliando"]],
   ["Localização", "Onde você imagina encontrar esse imóvel?", ["Balneário Camboriú", "Camboriú", "Praia Brava — Itajaí", "Quero ajuda para escolher a região"]],
   ["Momento", "Quando você pretende utilizar ou adquirir o imóvel?", ["Agora", "Em até 6 meses", "Entre 6 e 12 meses", "Entre 1 e 2 anos", "Sem prazo definido"]],
   ["Configuração", "Quantos dormitórios fazem sentido para você?", ["1 dormitório", "2 dormitórios", "3 dormitórios", "4 dormitórios ou mais", "Sem preferência"]],

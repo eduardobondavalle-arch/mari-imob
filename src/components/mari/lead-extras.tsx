@@ -342,7 +342,6 @@ function SelectionEditor({
               <option value="">Todas</option>
               <option value="sale">Venda</option>
               <option value="rent">Locação</option>
-              <option value="season">Temporada</option>
             </select>
           </label>
         </div>

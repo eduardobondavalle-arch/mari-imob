@@ -30,7 +30,7 @@ const optionalNumber = z.number().finite().min(0).max(1000000).nullable();
 export const propertySchema = z.object({
   title: z.string().trim().min(5).max(180),
   headline: z.string().trim().max(220).default(""),
-  purpose: z.enum(["sale", "rent", "season"]),
+  purpose: z.enum(["sale", "rent"]),
   type: z.string().trim().min(2).max(60),
   status: z.enum(["draft", "published", "hidden", "sold", "rented"]),
   featured: z.boolean(),
