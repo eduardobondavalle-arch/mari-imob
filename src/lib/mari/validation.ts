@@ -34,7 +34,17 @@ export const propertySchema = z.object({
   type: z.string().trim().min(2).max(60),
   status: z.enum(["draft", "published", "hidden", "sold", "rented"]),
   featured: z.boolean(),
+  superFeatured: z.boolean().default(false),
   price: z.number().finite().min(0).max(999999999999).nullable(),
+  condominiumFee: z.number().finite().min(0).max(999999999999).nullable().default(null),
+  condominiumPeriod: z.enum(["monthly", "annual"]).nullable().default(null),
+  iptuFee: z.number().finite().min(0).max(999999999999).nullable().default(null),
+  iptuPeriod: z.enum(["monthly", "annual"]).nullable().default(null),
+  trashFee: z.number().finite().min(0).max(999999999999).nullable().default(null),
+  trashPeriod: z.enum(["monthly", "annual"]).nullable().default(null),
+  otherFees: z.number().finite().min(0).max(999999999999).nullable().default(null),
+  otherFeesPeriod: z.enum(["monthly", "annual"]).nullable().default(null),
+  otherFeesDescription: z.string().trim().max(500).default(""),
   city: z.string().trim().min(2).max(100),
   neighborhood: z.string().trim().min(2).max(100),
   publicAddress: z.string().trim().max(250).default(""),
@@ -99,6 +109,7 @@ const imageUrl = z
       v === "" ||
       /^\/media\/[a-f0-9-]+\.webp$/.test(v) ||
       /^\/brand\/[a-z0-9-]+\.(?:png|webp)$/.test(v) ||
+      v === "/mari-portrait.png" ||
       v === "/images/coast.png",
     "Use uma imagem enviada pelo painel.",
   );
@@ -113,15 +124,24 @@ export const contentSchema = z.object({
   heroSubtitle: z.string().max(500),
   featuredTitle: z.string().min(1).max(180),
   aboutTitle: z.string().min(1).max(180),
+  aboutEyebrow: z.string().min(1).max(120),
   aboutText: z.string().max(5000),
   aboutImage: imageUrl,
+  aboutButtonText: z.string().min(1).max(80),
+  aboutButtonUrl: z.string().min(1).max(300),
   contactTitle: z.string().min(1).max(200),
   footerText: z.string().max(1000),
   whatsapp: z.string().regex(/^55[1-9]\d\d{8,9}$/, "Informe DDI, DDD e telefone, somente números."),
+  whatsappPhoto: imageUrl,
+  whatsappMessage: z.string().max(500),
+  whatsappEnabled: z.boolean(),
   instagram: z.union([
     z.literal(""),
     z.url().refine((v) => new URL(v).protocol === "https:"),
   ]),
+  facebook: z.union([z.literal(""), z.string().url().max(300)]),
+  youtube: z.union([z.literal(""), z.string().url().max(300)]),
+  linkedin: z.union([z.literal(""), z.string().url().max(300)]),
   creci: z.string().max(100),
   professionalInfo: z.string().max(500),
 });

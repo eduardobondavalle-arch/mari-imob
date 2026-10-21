@@ -10,21 +10,23 @@ type Card = {
   lastActivityAt: string;
   selections: { items: { propertyId: string }[] }[];
   appointments: { title: string; startsAt: string }[];
+  qualified: boolean;
 };
-type Stage = { id: string; name: string; isDefault: boolean; leads: Card[] };
+type Stage = { id: string; name: string; isDefault: boolean; funnelEnabled: boolean; funnelPosition: number | null; leads: Card[] };
 export function CrmBoard({ onOpen }: { onOpen: (id: string) => void }) {
   const [stages, setStages] = useState<Stage[]>([]),
     [q, setQ] = useState(""),
+    [qualifiedOnly, setQualifiedOnly] = useState(false),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false);
   const [dialog, setDialog] = useState<"lead" | "stage" | Stage | null>(null),
     [drag, setDrag] = useState<string | null>(null);
   const load = useCallback(
     () =>
-      api<Stage[]>(`admin/board?q=${encodeURIComponent(q)}`)
+      api<Stage[]>(`admin/board?q=${encodeURIComponent(q)}&qualified=${qualifiedOnly}`)
         .then(setStages)
         .catch((e) => setError(e.message)),
-    [q],
+    [q, qualifiedOnly],
   );
   useEffect(() => {
     const timer = setTimeout(load, 200),
@@ -64,6 +66,10 @@ export function CrmBoard({ onOpen }: { onOpen: (id: string) => void }) {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
+        <label className="check-line crm-qualified-filter">
+          <input type="checkbox" checked={qualifiedOnly} onChange={(e) => setQualifiedOnly(e.target.checked)} />
+          Somente perfis qualificados
+        </label>
         <div className="button-row">
           <button
             className="button secondary"
@@ -148,6 +154,7 @@ export function CrmBoard({ onOpen }: { onOpen: (id: string) => void }) {
                   <strong>{lead.firstName}</strong>
                   <span>{phoneMask(lead.phone)}</span>
                 </button>
+                {lead.qualified && <span className="qualified-badge">Perfil qualificado</span>}
                 <p>
                   {
                     new Set(
@@ -236,7 +243,11 @@ export function CrmBoard({ onOpen }: { onOpen: (id: string) => void }) {
                 } else {
                   await api(
                     `admin/stages${typeof dialog === "object" ? `/${dialog.id}` : ""}`,
-                    { name: f.get("name") },
+                    {
+                      name: f.get("name"),
+                      funnelEnabled: f.get("funnelEnabled") === "on",
+                      funnelPosition: f.get("funnelPosition") ? Number(f.get("funnelPosition")) : null,
+                    },
                     typeof dialog === "object" ? "PUT" : "POST",
                   );
                   setDialog(null);
@@ -271,15 +282,20 @@ export function CrmBoard({ onOpen }: { onOpen: (id: string) => void }) {
                 </p>
               </>
             ) : (
-              <label>
-                Nome da coluna
-                <input
-                  name="name"
-                  required
-                  minLength={2}
-                  defaultValue={typeof dialog === "object" ? dialog.name : ""}
-                />
-              </label>
+              <>
+                <label>
+                  Nome da coluna
+                  <input name="name" required minLength={2} defaultValue={typeof dialog === "object" ? dialog.name : ""} />
+                </label>
+                <label className="check-line">
+                  <input name="funnelEnabled" type="checkbox" defaultChecked={typeof dialog === "object" ? dialog.funnelEnabled : false} />
+                  Incluir esta etapa no funil comercial
+                </label>
+                <label>
+                  Ordem no funil
+                  <input name="funnelPosition" type="number" min="0" defaultValue={typeof dialog === "object" ? dialog.funnelPosition ?? "" : ""} />
+                </label>
+              </>
             )}
             <Notice error>{error}</Notice>
             <button className="button" disabled={busy}>

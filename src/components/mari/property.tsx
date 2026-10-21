@@ -31,6 +31,19 @@ export function whatsappLink(phone: string, property?: Listing) {
   const origin = typeof window === "undefined" ? "" : window.location.origin;
   return `https://wa.me/${phone}?text=${encodeURIComponent(property ? `Olá, Mari! Tenho interesse no imóvel ${property.title}, referência ${property.code}. Gostaria de receber mais informações. ${origin}/imovel/${property.slug}` : "Olá, Mari! Gostaria de conversar sobre imóveis no litoral.")}`;
 }
+function RentalCosts({ property }: { property: Listing }) {
+  const rows = [
+    ["Condomínio", property.condominiumFee, property.condominiumPeriod],
+    ["IPTU", property.iptuFee, property.iptuPeriod],
+    ["Taxa de lixo", property.trashFee, property.trashPeriod],
+    [property.otherFeesDescription || "Outras taxas", property.otherFees, property.otherFeesPeriod],
+  ] as const;
+  const monthly = rows.filter(([, value, period]) => value != null && period === "monthly");
+  const total = (property.price || 0) + monthly.reduce((sum, [, value]) => sum + Number(value || 0), 0);
+  const partial = rows.some(([, value, period]) => value == null || period !== "monthly");
+  const periodLabel = (period: string | null | undefined) => period === "annual" ? "/ano" : period === "monthly" ? "/mês" : " · periodicidade não informada";
+  return <div className="rental-costs"><div><span>Aluguel</span><strong>{priceLabel(property.price)}/mês</strong></div>{rows.filter(([,value])=>value!=null).map(([label,value,period])=><div key={label}><span>{label}</span><strong>{priceLabel(Number(value))}{periodLabel(period)}</strong></div>)}<div className="rental-total"><span>Total mensal {partial ? "estimado" : ""}</span><strong>{priceLabel(total)}</strong></div>{partial && <small>Total parcial: despesas não informadas ou sem periodicidade mensal não foram somadas.</small>}</div>;
+}
 export function PropertyGrid({ items }: { items: Listing[] }) {
   const [active, setActive] = useState<Listing | null>(null);
   const previousUrl = useRef("");
@@ -309,6 +322,7 @@ export function PropertyDetail({
             {p.purpose === "rent" ? "Valor mensal" : "Valor anunciado"}
           </p>
           <strong className="detail-price">{priceLabel(p.price)}</strong>
+          {p.purpose === "rent" && <RentalCosts property={p}/>}
           <p>Converse com a Mari sobre condições e disponibilidade.</p>
           <a
             className="button full"

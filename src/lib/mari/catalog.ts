@@ -23,7 +23,17 @@ export function listingDto(row: DbListing, admin = false): Listing {
     type: row.type,
     status: row.status,
     featured: row.featured,
+    superFeatured: row.superFeatured,
     price: row.price === null ? null : Number(row.price),
+    condominiumFee: row.condominiumFee === null ? null : Number(row.condominiumFee),
+    condominiumPeriod: row.condominiumPeriod,
+    iptuFee: row.iptuFee === null ? null : Number(row.iptuFee),
+    iptuPeriod: row.iptuPeriod,
+    trashFee: row.trashFee === null ? null : Number(row.trashFee),
+    trashPeriod: row.trashPeriod,
+    otherFees: row.otherFees === null ? null : Number(row.otherFees),
+    otherFeesPeriod: row.otherFeesPeriod,
+    otherFeesDescription: row.otherFeesDescription,
     city: row.city,
     cityId: row.cityId,
     neighborhood: row.neighborhood,
@@ -71,6 +81,19 @@ export async function publicFields() {
     include: { options: true },
     orderBy: { createdAt: "asc" },
   })) as Field[];
+}
+export async function homeSuperFeatured() {
+  const rows = await db.property.findMany({
+    where: {
+      status: "published",
+      purpose: { in: ["sale", "rent"] },
+      superFeatured: true,
+    },
+    include: listingInclude,
+    orderBy: { updatedAt: "desc" },
+    take: 3,
+  });
+  return rows.map((row) => listingDto(row));
 }
 export async function searchCatalog(params: URLSearchParams) {
   const fields = await publicFields();

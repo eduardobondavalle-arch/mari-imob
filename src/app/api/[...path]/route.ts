@@ -46,6 +46,7 @@ import {
   leadExtras,
   saveComment,
   saveAdminSelection,
+  funnelSummary,
 } from "@/lib/mari/crm-service";
 import {
   appointments,
@@ -53,6 +54,16 @@ import {
   saveAppointment,
 } from "@/lib/mari/agenda-service";
 import { saveConsultation } from "@/lib/mari/consultation";
+import {
+  saveOwnerSubmission,
+  ownerSubmissions,
+  convertOwnerSubmission,
+} from "@/lib/mari/owner-service";
+import {
+  adminNews,
+  saveNews,
+  deleteNews,
+} from "@/lib/mari/news-service";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type Context = { params: Promise<{ path: string[] }> };
@@ -78,23 +89,73 @@ async function handle(request: Request, context: Context) {
     const id = segments[2];
     if (!["GET", "HEAD"].includes(method)) checkOrigin(request);
     let result: unknown;
-    if (path === "consultation" && method === "POST")
+    if (path === "consultation" && method === "POST") {
+      await rateLimit(`consultation:${requestIp(request)}`, 10);
       result = await saveConsultation(await readJson(request));
+      return Response.json(result, { headers: { "Cache-Control": "private, no-store" } });
+    }
+    if (path === "owner-upload" && method === "POST") {
+      await rateLimit(`owner-upload:${requestIp(request)}`, 20);
+      result = await uploadMedia(request);
+      return Response.json(result, { headers: { "Cache-Control": "private, no-store" } });
+    }
+    if (path === "owner-submissions" && method === "POST") {
+      await rateLimit(`owner-submission:${requestIp(request)}`, 10);
+      result = await saveOwnerSubmission(await readJson(request));
+      return Response.json(result, { headers: { "Cache-Control": "private, no-store" } });
+    }
     if (path.startsWith("admin/") && path !== "admin/login")
       await requireAdmin(path === "admin/password" || path === "admin/logout");
     if (path === "admin/board" && method === "GET")
-      result = await board(url.searchParams.get("q")?.slice(0, 100) || "");
+      result = await board(
+        url.searchParams.get("q")?.slice(0, 100) || "",
+        url.searchParams.get("qualified") === "true",
+      );
+    else if (path === "admin/funnel" && method === "GET")
+      result = await funnelSummary(
+        url.searchParams.get("days") ? Number(url.searchParams.get("days")) : null,
+        url.searchParams.get("qualified") === "true",
+      );
     else if (path === "admin/stages/order" && method === "PUT")
       result = await reorderStages(await readJson(request));
     else if (segments[0] === "admin" && segments[1] === "stages") {
       if (method === "POST" || method === "PUT")
         result = await saveStage(await readJson(request), id);
       else if (method === "DELETE" && id)
-        result = await deleteStage(id, await readJson(request));
+        result = await deleteStage(id, await readJson(request), (await requireAdmin()).id);
       else assert(false, 405, "Operação inválida.");
     } else if (path === "admin/lead-move" && method === "POST")
-      result = await moveLead(await readJson(request));
-    else if (path === "admin/leads" && method === "POST")
+      result = await moveLead(await readJson(request), (await requireAdmin()).id);
+    else if (path === "admin/owner-submissions" && method === "GET")
+      result = await ownerSubmissions();
+    else if (
+      segments[0] === "admin" &&
+      segments[1] === "owner-submissions" &&
+      id &&
+      segments.length === 3 &&
+      method === "PATCH"
+    )
+      result = await db.ownerSubmission.update({
+        where: { id },
+        data: z.object({ status: z.enum(["new", "contacted", "converted", "archived"]) }).parse(await readJson(request)),
+      });
+    else if (
+      segments[0] === "admin" &&
+      segments[1] === "owner-submissions" &&
+      id &&
+      segments[3] === "convert" &&
+      method === "POST"
+    )
+      result = await convertOwnerSubmission(id);
+    else if (path === "admin/news" && method === "GET")
+      result = await adminNews();
+    else if (path === "admin/news" && method === "POST")
+      result = await saveNews(await readJson(request));
+    else if (segments[0] === "admin" && segments[1] === "news" && id) {
+      if (method === "PUT") result = await saveNews(await readJson(request), id);
+      else if (method === "DELETE") result = await deleteNews(id);
+      else assert(false, 405, "OperaÃ§Ã£o invÃ¡lida.");
+    } else if (path === "admin/leads" && method === "POST")
       result = await manualLead(
         await readJson(request),
         (await requireAdmin()).id,
@@ -171,6 +232,7 @@ async function handle(request: Request, context: Context) {
           data: z
             .object({
               featured: z.boolean().optional(),
+              superFeatured: z.boolean().optional(),
               status: z
                 .enum(["draft", "published", "hidden", "sold", "rented"])
                 .optional(),

@@ -19,7 +19,17 @@ const blank: FormValue = {
   type: "Apartamento",
   status: "draft",
   featured: false,
+  superFeatured: false,
   price: null,
+  condominiumFee: null,
+  condominiumPeriod: null,
+  iptuFee: null,
+  iptuPeriod: null,
+  trashFee: null,
+  trashPeriod: null,
+  otherFees: null,
+  otherFeesPeriod: null,
+  otherFeesDescription: "",
   city: "Balneário Camboriú",
   neighborhood: "",
   publicAddress: "",
@@ -242,8 +252,19 @@ export function PropertyEditor({
             />
             <span>Destacar na página inicial</span>
           </label>
+          <label className="check-line">
+            <input type="checkbox" checked={data.superFeatured} onChange={(e) => set("superFeatured", e.target.checked)} />
+            <span>Super Destaque</span>
+          </label>
         </div>
       </section>
+      {data.purpose === "rent" && <section className="admin-card">
+        <h2>Despesas da locação</h2>
+        <div className="form-grid">
+          {([['condominiumFee','condominiumPeriod','Condomínio'],['iptuFee','iptuPeriod','IPTU'],['trashFee','trashPeriod','Taxa de lixo'],['otherFees','otherFeesPeriod','Outras taxas']] as const).map(([valueKey, periodKey, label]) => <div className="expense-field" key={valueKey}><label>{label}<input type="number" min="0" step="0.01" value={data[valueKey] ?? ""} onChange={(e)=>set(valueKey,e.target.value===""?null:Number(e.target.value))}/></label><label>Periodicidade<select value={data[periodKey] || ""} onChange={(e)=>set(periodKey,(e.target.value || null) as FormValue[typeof periodKey])}><option value="">Não informada</option><option value="monthly">Mensal</option><option value="annual">Anual</option></select></label></div>)}
+          <label className="span-2">Descrição das outras taxas<input value={data.otherFeesDescription} onChange={(e)=>set("otherFeesDescription",e.target.value)}/></label>
+        </div>
+      </section>}
       <section className="admin-card">
         <h2>Localização e características</h2>
         <div className="form-grid">

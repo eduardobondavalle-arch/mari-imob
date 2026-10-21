@@ -16,6 +16,7 @@ model Admin {
   sessions           Session[]
   comments           LeadComment[]
   appointments       Appointment[]
+  leadMovements      LeadMovement[]
 }
 
 model Lead {
@@ -37,6 +38,9 @@ model Lead {
   sessions        Session[]
   requests        ContactRequest[]
   consultations   Consultation[]
+  qualified       Boolean          @default(false)
+  ownerSubmissions OwnerSubmission[]
+  movements       LeadMovement[]
   @@index([createdAt])
   @@index([firstName])
   @@index([stageId, position])
@@ -91,7 +95,17 @@ model Property {
   type         String
   status       String           @default("draft")
   featured     Boolean          @default(false)
+  superFeatured Boolean         @default(false)
   price        Decimal?         @db.Decimal(14, 2)
+  condominiumFee Decimal?       @db.Decimal(14, 2)
+  condominiumPeriod String?
+  iptuFee      Decimal?         @db.Decimal(14, 2)
+  iptuPeriod   String?
+  trashFee     Decimal?         @db.Decimal(14, 2)
+  trashPeriod  String?
+  otherFees    Decimal?         @db.Decimal(14, 2)
+  otherFeesPeriod String?
+  otherFeesDescription String   @default("")
   city         String
   cityId       String?
   municipality City?            @relation(fields: [cityId], references: [id], onDelete: SetNull)
@@ -115,6 +129,7 @@ model Property {
   selections   SelectionItem[]
   requests     ContactRequest[]
   appointments Appointment[]
+  ownerSubmission OwnerSubmission?
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
   @@index([status, purpose, featured])
@@ -133,8 +148,11 @@ model Media {
   position   Int       @default(0)
   propertyId String?
   property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  ownerSubmissionId String?
+  ownerSubmission OwnerSubmission? @relation(fields: [ownerSubmissionId], references: [id], onDelete: SetNull)
   createdAt  DateTime  @default(now())
   @@index([propertyId, position])
+  @@index([ownerSubmissionId])
 }
 
 model Tag {
@@ -242,7 +260,65 @@ model LeadStage {
   name String
   position Int @default(0)
   isDefault Boolean @default(false)
+  funnelEnabled Boolean @default(false)
+  funnelPosition Int?
   leads Lead[]
+  movementsFrom LeadMovement[] @relation("movementFrom")
+  movementsTo LeadMovement[] @relation("movementTo")
+}
+
+model LeadMovement {
+  id          String    @id @default(cuid())
+  leadId      String
+  fromStageId String?
+  toStageId   String
+  authorId    String?
+  createdAt   DateTime  @default(now())
+  lead        Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  fromStage   LeadStage? @relation("movementFrom", fields: [fromStageId], references: [id], onDelete: SetNull)
+  toStage     LeadStage @relation("movementTo", fields: [toStageId], references: [id], onDelete: Restrict)
+  author      Admin?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  @@index([leadId, createdAt])
+  @@index([toStageId, createdAt])
+}
+
+model OwnerSubmission {
+  id                  String    @id @default(cuid())
+  leadId              String
+  purpose             String
+  propertyType        String
+  city                String
+  neighborhood        String
+  location            String    @default("")
+  area                Float?
+  bedrooms            Int?
+  askingPrice         Decimal?  @db.Decimal(14, 2)
+  notes               String    @default("")
+  status              String    @default("new")
+  convertedPropertyId String?   @unique
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  lead                Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  photos              Media[]
+  convertedProperty   Property? @relation(fields: [convertedPropertyId], references: [id], onDelete: SetNull)
+  @@index([status, createdAt])
+}
+
+model News {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  summary     String
+  content     String   @default("")
+  city        String
+  coverImage  String   @default("")
+  sourceUrl   String   @default("")
+  published   Boolean  @default(false)
+  featured    Boolean  @default(false)
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([published, featured, publishedAt])
 }
 
 model LeadComment {

@@ -33,11 +33,17 @@ import { PropertyGrid } from "./property";
 import { CrmBoard } from "./crm-board";
 import { Agenda } from "./agenda";
 import { LeadExtras } from "./lead-extras";
+import { OwnerSubmissionsAdmin } from "./owner-submissions-admin";
+import { NewsAdmin } from "./news-admin";
+import { FunnelAdmin } from "./funnel-admin";
 const tabs = [
   { id: "overview", label: "Visão geral", Icon: LayoutDashboard },
   { id: "properties", label: "Imóveis", Icon: Building2 },
   { id: "leads", label: "Interessados", Icon: Users },
+  { id: "funnel", label: "Funil", Icon: LayoutDashboard },
+  { id: "owners", label: "Captações", Icon: Building2 },
   { id: "agenda", label: "Agenda", Icon: CalendarDays },
+  { id: "news", label: "Notícias", Icon: Paintbrush },
   { id: "editor", label: "Editor do site", Icon: Paintbrush },
   { id: "settings", label: "Configurações", Icon: Settings },
 ];
@@ -416,7 +422,7 @@ export function AdminPanel({
                             <th>Imóvel</th>
                             <th>Valor</th>
                             <th>Status</th>
-                            <th>Destaque</th>
+                            <th>Destaques</th>
                             <th>Ações</th>
                           </tr>
                         </thead>
@@ -454,25 +460,14 @@ export function AdminPanel({
                                 </select>
                               </td>
                               <td>
-                                <button
-                                  className={`icon-button ${p.featured ? "star-active" : ""}`}
-                                  aria-label={`Destaque de ${p.code}`}
-                                  aria-pressed={p.featured}
-                                  onClick={() =>
-                                    action(() =>
-                                      api(
-                                        `admin/properties/${p.id}`,
-                                        { featured: !p.featured },
-                                        "PATCH",
-                                      ),
-                                    )
-                                  }
-                                >
-                                  <Star
-                                    size={19}
-                                    fill={p.featured ? "currentColor" : "none"}
-                                  />
-                                </button>
+                                <div className="row-actions">
+                                  <button className={`icon-button ${p.featured ? "star-active" : ""}`} title="Destaque" aria-label={`Destaque de ${p.code}`} aria-pressed={p.featured} onClick={() => action(() => api(`admin/properties/${p.id}`, { featured: !p.featured }, "PATCH"))}>
+                                    <Star size={19} fill={p.featured ? "currentColor" : "none"} />
+                                  </button>
+                                  <button className={`icon-button super-star ${p.superFeatured ? "star-active" : ""}`} title="Super destaque" aria-label={`Super destaque de ${p.code}`} aria-pressed={p.superFeatured} onClick={() => action(() => api(`admin/properties/${p.id}`, { superFeatured: !p.superFeatured }, "PATCH"))}>
+                                    <Star size={19} fill={p.superFeatured ? "currentColor" : "none"} />
+                                  </button>
+                                </div>
                               </td>
                               <td>
                                 <div className="row-actions">
@@ -521,7 +516,10 @@ export function AdminPanel({
                   </>
                 ))}
               {tab === "leads" && <CrmBoard onOpen={id => action(async () => setLead(await api<LeadDetail>(`admin/leads/${id}`)))}/>}
+              {tab === "funnel" && <FunnelAdmin />}
+              {tab === "owners" && <OwnerSubmissionsAdmin />}
               {tab === "agenda" && <Agenda/>}
+              {tab === "news" && <NewsAdmin />}
               {tab === "editor" && <SiteEditor />}
               {tab === "settings" && (
                 <>

@@ -19,6 +19,18 @@ type Comment = {
   createdAt: string;
   updatedAt: string;
 };
+type Consultation = {
+  id: string;
+  answers: Record<string, string | string[]>;
+  completedAt: string;
+};
+type Movement = {
+  id: string;
+  createdAt: string;
+  fromStage: { name: string } | null;
+  toStage: { name: string };
+  author: { email: string } | null;
+};
 export function LeadExtras({
   lead,
 }: {
@@ -27,7 +39,9 @@ export function LeadExtras({
   const [data, setData] = useState<{
       comments: Comment[];
       selections: Selection[];
-    }>({ comments: [], selections: [] }),
+      consultations: Consultation[];
+      movements: Movement[];
+    }>({ comments: [], selections: [], consultations: [], movements: [] }),
     [error, setError] = useState(""),
     [message, setMessage] = useState(""),
     [text, setText] = useState(""),
@@ -60,6 +74,36 @@ export function LeadExtras({
   return (
     <div className="lead-extras">
       <Notice error>{error}</Notice>
+      {data.consultations.length > 0 && (
+        <section className="lead-profile">
+          <p className="eyebrow">PERFIL DE BUSCA QUALIFICADO</p>
+          <h3>Consultoria personalizada · {data.consultations.length} preenchimento(s)</h3>
+          {data.consultations.map((consultation, index) => <details className="profile-version" key={consultation.id} open={index === 0}>
+            <summary>{index === 0 ? "Perfil mais recente" : "Perfil anterior"} · {formatAppointment(consultation.completedAt)}</summary>
+            <div className="profile-answers">
+              {Object.entries(consultation.answers)
+                .filter(([key, value]) => key !== "otherBudget" || value)
+                .map(([key, value]) => (
+                  <div key={key}>
+                    <span>{({ objective: "Objetivo", regions: "Regiões", timing: "Momento", bedrooms: "Dormitórios", budget: "Investimento", otherBudget: "Outro valor", payment: "Pagamento" } as Record<string, string>)[key] || key}</span>
+                    <strong>{Array.isArray(value) ? value.join(", ") : value}</strong>
+                  </div>
+                ))}
+            </div>
+          </details>)}
+        </section>
+      )}
+      {data.movements.length > 0 && (
+        <section className="lead-history">
+          <h3>Histórico do funil</h3>
+          {data.movements.map((movement) => (
+            <p key={movement.id}>
+              <strong>{movement.fromStage?.name || "Entrada"}</strong> → <strong>{movement.toStage.name}</strong>
+              <small>{formatAppointment(movement.createdAt)}{movement.author ? ` · ${movement.author.email}` : ""}</small>
+            </p>
+          ))}
+        </section>
+      )}
       <h3>Comentários internos</h3>
       <form
         className="stack"

@@ -19,12 +19,12 @@ const groups: { id: string; label: string; keys: (keyof SiteContent)[] }[] = [
   {
     id: "about",
     label: "Apresentação da Mari",
-    keys: ["aboutTitle", "aboutText", "aboutImage"],
+    keys: ["aboutEyebrow", "aboutTitle", "aboutText", "aboutImage", "aboutButtonText", "aboutButtonUrl"],
   },
   {
     id: "contact",
     label: "Contato e redes sociais",
-    keys: ["contactTitle", "whatsapp", "instagram"],
+    keys: ["contactTitle", "whatsapp", "whatsappPhoto", "whatsappMessage", "whatsappEnabled", "instagram", "facebook", "youtube", "linkedin"],
   },
   {
     id: "footer",
@@ -43,12 +43,21 @@ const labels: Record<keyof SiteContent, string> = {
   heroSubtitle: "Subtítulo",
   featuredTitle: "Título dos destaques",
   aboutTitle: "Título da apresentação",
+  aboutEyebrow: "Subtítulo da apresentação",
   aboutText: "Texto de apresentação",
   aboutImage: "Foto de apresentação",
+  aboutButtonText: "Texto do botão",
+  aboutButtonUrl: "Destino do botão",
   contactTitle: "Título do contato",
   footerText: "Texto do rodapé",
   whatsapp: "WhatsApp com DDI e DDD",
+  whatsappPhoto: "Foto do botão do WhatsApp",
+  whatsappMessage: "Mensagem padrão do WhatsApp",
+  whatsappEnabled: "Exibir botão do WhatsApp",
   instagram: "Link do Instagram",
+  facebook: "Link do Facebook",
+  youtube: "Link do YouTube",
+  linkedin: "Link do LinkedIn",
   creci: "CRECI (somente se informado)",
   professionalInfo: "Informações profissionais",
 };
@@ -229,7 +238,7 @@ export function SiteEditor() {
             {groups
               .find((g) => g.id === group)
               ?.keys.map((key) =>
-                ["logo", "favicon", "heroImage", "aboutImage"].includes(key) ? (
+                ["logo", "favicon", "heroImage", "aboutImage", "whatsappPhoto"].includes(key) ? (
                   <div key={key}>
                     <label>{labels[key]}</label>
                     {content[key] && (
@@ -254,7 +263,13 @@ export function SiteEditor() {
                 ) : (
                   <label key={key}>
                     {labels[key]}
-                    {key.includes("Color") ? (
+                    {key === "whatsappEnabled" ? (
+                      <input
+                        type="checkbox"
+                        checked={content[key]}
+                        onChange={(e) => setContent((c) => ({ ...c!, [key]: e.target.checked }))}
+                      />
+                    ) : key.includes("Color") ? (
                       <input
                         type="color"
                         value={content[key]}

@@ -62,9 +62,9 @@ export default async function Page({
           <PropertyGrid items={data.items} />
         ) : (
           <div className="empty-state">
-            <h2>Ainda não encontramos essa combinação.</h2>
+            <h2>Não encontrou seu imóvel? Fique tranquilo!</h2>
             <p>
-              Experimente outros filtros ou conte à Mari o que você procura.
+              Me conte o que você procura e eu apresento as melhores opções para você.
             </p>
             <div className="button-row">
               <Link className="button secondary" href="/buscar">
@@ -72,6 +72,9 @@ export default async function Page({
               </Link>
               <Link className="button" href="/contato">
                 Conversar com a Mari
+              </Link>
+              <Link className="button" href="/consultoria">
+                Encontrar meu imóvel ideal
               </Link>
             </div>
           </div>

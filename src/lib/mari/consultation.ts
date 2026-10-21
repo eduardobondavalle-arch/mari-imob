@@ -19,8 +19,8 @@ export async function saveConsultation(input: unknown) {
     const stage = await tx.leadStage.findFirstOrThrow({ where: { isDefault: true } });
     const lead = await tx.lead.upsert({
       where: { phone },
-      create: { firstName: data.firstName, phone, source: "Consultoria personalizada", stageId: stage.id, position: await tx.lead.count({ where: { stageId: stage.id } }) },
-      update: { firstName: data.firstName, source: "Consultoria personalizada", lastActivityAt: new Date() },
+      create: { firstName: data.firstName, phone, source: "Consultoria personalizada", qualified: true, consentAt: new Date(), stageId: stage.id, position: await tx.lead.count({ where: { stageId: stage.id } }) },
+      update: { firstName: data.firstName, source: "Consultoria personalizada", qualified: true, consentAt: new Date(), lastActivityAt: new Date() },
     });
     await tx.consultation.create({ data: { leadId: lead.id, answers: data.answers } });
     return { ok: true, leadId: lead.id };

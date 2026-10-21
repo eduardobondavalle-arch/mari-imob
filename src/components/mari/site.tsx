@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useMari } from "./provider";
 import { Modal, Picture } from "./ui";
-import { PropertyGrid, whatsappLink } from "./property";
+import { PropertyDetail, PropertyGrid, whatsappLink } from "./property";
 import { type Listing, type Field, purposes } from "@/lib/mari/types";
 export function Brand() {
   const { content } = useMari();
@@ -55,6 +55,7 @@ const links = [
   ["Alugar", "/buscar?purpose=rent"],
   ["Imóveis", "/buscar"],
   ["Consultoria", "/consultoria"],
+  ["Anuncie seu imóvel", "/proprietarios"],
   ["Contato", "/contato"],
 ];
 export function PublicFrame({ children }: { children: React.ReactNode }) {
@@ -147,6 +148,9 @@ export function PublicFrame({ children }: { children: React.ReactNode }) {
                 Instagram <ArrowUpRight size={14} />
               </a>
             )}
+            {content.facebook && <a href={content.facebook} target="_blank" rel="noopener noreferrer">Facebook <ArrowUpRight size={14} /></a>}
+            {content.youtube && <a href={content.youtube} target="_blank" rel="noopener noreferrer">YouTube <ArrowUpRight size={14} /></a>}
+            {content.linkedin && <a href={content.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn <ArrowUpRight size={14} /></a>}
             <Link href="/contato">Solicitar contato</Link>
             <p>
               Balneário Camboriú, Camboriú e Praia Brava
@@ -163,15 +167,16 @@ export function PublicFrame({ children }: { children: React.ReactNode }) {
           <Link href="/privacidade">Privacidade e seus dados</Link>
         </div>
       </footer>
-      <a
-        className="floating-contact"
-        href={whatsappLink(content.whatsapp)}
+      {content.whatsappEnabled && <a
+        className="floating-contact floating-contact-photo"
+        href={`https://wa.me/${content.whatsapp}?text=${encodeURIComponent(content.whatsappMessage)}`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Conversar com a Mari no WhatsApp"
       >
-        <MessageCircle size={24} />
-      </a>
+        <Image src={content.whatsappPhoto || "/mari-portrait.png"} alt="Mari" fill sizes="64px" />
+        <span><MessageCircle size={15} /></span>
+      </a>}
       {menu && (
         <Modal title="Menu" onClose={() => setMenu(false)}>
           <nav className="mobile-nav" aria-label="Menu mobile">
@@ -195,8 +200,23 @@ export function PublicFrame({ children }: { children: React.ReactNode }) {
     </>
   );
 }
-export function Home({ featured }: { featured: Listing[] }) {
+type HomeNews = { id: string; slug: string; title: string; summary: string; content: string; sourceUrl: string; city: string; coverImage: string; publishedAt: string };
+export function Home({ featured, superFeatured = [], news = [] }: { featured: Listing[]; superFeatured?: Listing[]; news?: HomeNews[] }) {
   const { content, contact } = useMari();
+  const [superOpen, setSuperOpen] = useState<Listing | null>(null);
+  useEffect(() => {
+    const onPopState = () => setSuperOpen(null);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
+  function openSuper(property: Listing) {
+    window.history.pushState({ ...window.history.state, mariPreview: true }, "", `/imovel/${property.slug}`);
+    setSuperOpen(property);
+  }
+  function closeSuper() {
+    if (window.history.state?.mariPreview) window.history.back();
+    setSuperOpen(null);
+  }
   return (
     <>
       <section className="hero">
@@ -232,6 +252,20 @@ export function Home({ featured }: { featured: Listing[] }) {
       <section className="container home-search" id="encontrar">
         <SearchBox />
       </section>
+      {superFeatured.length > 0 && (
+        <section className="container section super-featured-section">
+          <div className="section-heading"><div><p className="eyebrow">CURADORIA ESPECIAL DA MARI</p><h2>Super destaques</h2><p>Imóveis selecionados para quem procura algo singular.</p></div></div>
+          <div className="super-featured-grid">
+            {superFeatured.map((property) => <button type="button" className="super-featured-card" onClick={() => openSuper(property)} key={property.id}>
+              {property.images[0] ? <Picture src={`/media/${property.images[0].key}`} alt={property.images[0].alt || property.title} /> : <div className="picture super-placeholder" />}
+              <span className="super-featured-shade" />
+              {property.images.length > 1 && <div className="super-thumbnails">{property.images.slice(1,4).map((photo) => <Picture key={photo.id} src={`/media/${photo.key}`} alt="" />)}</div>}
+              <div className="super-featured-copy"><small>{property.city} · {property.neighborhood}</small><h3>{property.title}</h3>{property.headline && <p>{property.headline}</p>}<span className="super-facts">{property.bedrooms != null && `${property.bedrooms} dorm.`}{property.area != null && ` · ${property.area} m²`}{property.parking != null && ` · ${property.parking} vagas`}</span><strong>{property.price ? `R$ ${property.price.toLocaleString("pt-BR")}` : "Valor sob consulta"}</strong><span>Conhecer este imóvel <ArrowUpRight size={17}/></span></div>
+            </button>)}
+          </div>
+          {superOpen && <Modal title="Super destaque" wide onClose={closeSuper}><PropertyDetail property={superOpen}/></Modal>}
+        </section>
+      )}
       <section className="container section featured-section">
         <div className="section-heading">
           <div>
@@ -262,6 +296,9 @@ export function Home({ featured }: { featured: Listing[] }) {
           </div>
         )}
       </section>
+      <section className="owner-home-call">
+        <div className="container owner-home-inner"><div><p className="eyebrow">PARA PROPRIETÁRIOS</p><h2>Seu imóvel merece as melhores oportunidades.</h2><p>Conte um pouco sobre ele e converse com a Mari sobre a melhor estratégia de venda ou locação.</p></div><Link className="button" href="/proprietarios">Quero anunciar meu imóvel <ArrowUpRight size={17}/></Link></div>
+      </section>
       <section className="region-section">
         <div className="container region-inner">
           <div>
@@ -287,7 +324,16 @@ export function Home({ featured }: { featured: Listing[] }) {
               </Link>
             </div>
           </div>
-          <div className="region-art">
+          {news.length ? (
+            <div className="regional-news">
+              <div className="regional-news-heading"><span>NOTÍCIAS DA REGIÃO</span><small>Informação para escolher bem</small></div>
+              {news.map((item) => <Link href={!item.content && item.sourceUrl ? item.sourceUrl : `/noticias/${item.slug}`} target={!item.content && item.sourceUrl ? "_blank" : undefined} rel={!item.content && item.sourceUrl ? "noopener noreferrer" : undefined} key={item.id} className="regional-news-card">
+                {item.coverImage && <Picture src={item.coverImage} alt="" />}
+                <div><small>{item.city} · {new Date(item.publishedAt).toLocaleDateString("pt-BR")}</small><h3>{item.title}</h3><p>{item.summary}</p></div>
+                <ArrowUpRight size={18} />
+              </Link>)}
+            </div>
+          ) : <div className="region-art">
             <Waves size={78} strokeWidth={0.6} />
             <span>26°59′ S · 48°38′ O</span>
             <p>
@@ -295,13 +341,13 @@ export function Home({ featured }: { featured: Listing[] }) {
               <br />
               <em>horizonte.</em>
             </p>
-          </div>
+          </div>}
         </div>
       </section>
       <section className="container section about-section">
-        {content.aboutImage ? (
+        {(content.aboutImage || "/mari-portrait.png") ? (
           <Picture
-            src={content.aboutImage}
+            src={content.aboutImage || "/mari-portrait.png"}
             alt="Mari Corretora de Imóveis"
             className="about-photo"
           />
@@ -314,12 +360,13 @@ export function Home({ featured }: { featured: Listing[] }) {
           </div>
         )}
         <div>
-          <p className="eyebrow">UM ATENDIMENTO PRÓXIMO, DO SEU JEITO</p>
+          <p className="eyebrow">{content.aboutEyebrow}</p>
           <h2 className="pre-line">{content.aboutTitle}</h2>
           <p className="pre-line">{content.aboutText}</p>
-          <button className="button" onClick={() => contact()}>
-            Vamos nos conhecer <ArrowUpRight size={18} />
-          </button>
+          <Link className="button" href={content.aboutButtonUrl || "/contato"}>
+            {content.aboutButtonText || "Vamos nos conhecer"} <ArrowUpRight size={18} />
+          </Link>
+          {content.instagram && <a className="about-instagram" href={content.instagram} target="_blank" rel="noopener noreferrer">Acompanhe meu trabalho no Instagram <ArrowUpRight size={15}/></a>}
           <p className="signature">Mari</p>
         </div>
       </section>

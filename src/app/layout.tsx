@@ -3,6 +3,7 @@ import "@fontsource-variable/montserrat";
 import "@fontsource-variable/cormorant-garamond";
 import "./mari.css";
 import "@/styles/mari-v2.css";
+import "@/styles/mari-v3.css";
 import { MariProvider } from "@/components/mari/provider";
 import { PublicFrame } from "@/components/mari/site";
 import { getContent } from "@/lib/mari/catalog";
