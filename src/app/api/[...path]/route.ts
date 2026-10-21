@@ -52,6 +52,7 @@ import {
   appointmentDetail,
   saveAppointment,
 } from "@/lib/mari/agenda-service";
+import { saveConsultation } from "@/lib/mari/consultation";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type Context = { params: Promise<{ path: string[] }> };
@@ -77,6 +78,8 @@ async function handle(request: Request, context: Context) {
     const id = segments[2];
     if (!["GET", "HEAD"].includes(method)) checkOrigin(request);
     let result: unknown;
+    if (path === "consultation" && method === "POST")
+      result = await saveConsultation(await readJson(request));
     if (path.startsWith("admin/") && path !== "admin/login")
       await requireAdmin(path === "admin/password" || path === "admin/logout");
     if (path === "admin/board" && method === "GET")

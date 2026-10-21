@@ -36,9 +36,19 @@ model Lead {
   appointments    Appointment[]
   sessions        Session[]
   requests        ContactRequest[]
+  consultations   Consultation[]
   @@index([createdAt])
   @@index([firstName])
   @@index([stageId, position])
+}
+
+model Consultation {
+  id               String   @id @default(cuid())
+  leadId           String
+  answers          Json
+  completedAt      DateTime @default(now())
+  lead             Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  @@index([leadId, completedAt])
 }
 
 model Session {
