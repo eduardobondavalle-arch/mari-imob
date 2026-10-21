@@ -18,7 +18,7 @@
   .super-featured-card .super-featured-copy h3 { color: #fff; font-family: "Cormorant Garamond", serif; font-size: 31px; font-weight: 600; line-height: 1.05; }
   .super-featured-card .super-featured-copy strong { color: #fff; font-size: 17px; }
   .super-featured-card .super-featured-copy > span { display: flex; align-items: center; gap: 7px; color: #fff; font-size: 11px; }
-  .super-featured-card .super-featured-copy p { color: #f7f4ef; font-size: 11px; line-height: 1.55; }
+  .super-featured-card .super-featured-copy p { color: #f7f4ef !important; font-size: 11px; line-height: 1.55; }
   .super-featured-card .super-featured-copy .super-facts { color: #fff; opacity: .9; }
   .super-thumbnails { position: absolute; z-index: 2; right: 18px; top: 84px; display: grid; gap: 7px; }
   .super-thumbnails .picture { position: relative; width: 72px; height: 55px; border: 1px solid #ffffffaa; }
@@ -46,7 +46,7 @@
   .owners-hero-copy { position: relative; z-index: 2; width: 100%; padding-block: 88px 92px; color: #fff; text-shadow: 0 2px 20px #00002c80; }
   .owners-hero-copy .eyebrow { color: #e5c6a7; }
   .owners-hero-copy h1 { max-width: 690px; margin: 12px 0 18px; color: #fff; font-size: clamp(48px, 6vw, 84px); line-height: .96; }
-  .owners-hero-copy > p:last-child { max-width: 630px; color: #f8f6f1; font-size: 16px; line-height: 1.65; }
+  .owners-hero-copy > p:last-child { max-width: 630px; color: #f8f6f1 !important; font-size: 16px; line-height: 1.65; }
   .owners-page { position: relative; z-index: 3; max-width: 1040px; margin-top: -46px; padding-top: 0; }
   .owner-form { margin-top: 0; padding: 36px; border: 1px solid var(--line); background: #fafaf8; box-shadow: 0 24px 70px #0000341a; display: grid; gap: 24px; }
   .owner-form .span-2 { grid-column: span 2; }
