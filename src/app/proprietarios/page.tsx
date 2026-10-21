@@ -7,7 +7,7 @@ export default function Page() {
   return <>
     <section className="owners-hero">
       <Image
-        src="/images/owners-hero-v1.png"
+        src="/images/owners-hero-v1.webp"
         alt="Entrega das chaves de um imóvel com Balneário Camboriú ao fundo"
         fill
         priority

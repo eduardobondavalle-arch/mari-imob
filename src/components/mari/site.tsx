@@ -15,11 +15,13 @@ import {
   Waves,
   Compass,
   MessageCircle,
+  Instagram,
 } from "lucide-react";
 import { useMari } from "./provider";
 import { Modal, Picture } from "./ui";
 import { PropertyDetail, PropertyGrid, whatsappLink } from "./property";
 import { type Listing, type Field, purposes } from "@/lib/mari/types";
+import { ConsultationWizard } from "./consultation-wizard";
 export function Brand() {
   const { content } = useMari();
   return (
@@ -297,7 +299,9 @@ export function Home({ featured, superFeatured = [], news = [] }: { featured: Li
         )}
       </section>
       <section className="owner-home-call">
-        <div className="container owner-home-inner"><div><p className="eyebrow">PARA PROPRIETÁRIOS</p><h2>Seu imóvel merece as melhores oportunidades.</h2><p>Conte um pouco sobre ele e converse com a Mari sobre a melhor estratégia de venda ou locação.</p></div><Link className="button" href="/proprietarios">Quero anunciar meu imóvel <ArrowUpRight size={17}/></Link></div>
+        <Image className="owner-home-image" src="/images/owners-hero-v1.webp" alt="" fill sizes="100vw" loading="eager" />
+        <span className="owner-home-shade" aria-hidden="true" />
+        <div className="container owner-home-inner"><div><p className="eyebrow">PARA PROPRIETÁRIOS</p><h2>Seu imóvel merece as melhores oportunidades.</h2><p>Conte um pouco sobre ele e converse com a Mari sobre a melhor estratégia de venda ou locação.</p></div><Link className="button light" href="/proprietarios">Quero anunciar meu imóvel <ArrowUpRight size={17}/></Link></div>
       </section>
       <section className="region-section">
         <div className="container region-inner">
@@ -363,12 +367,15 @@ export function Home({ featured, superFeatured = [], news = [] }: { featured: Li
           <p className="eyebrow">{content.aboutEyebrow}</p>
           <h2 className="pre-line">{content.aboutTitle}</h2>
           <p className="pre-line">{content.aboutText}</p>
-          <Link className="button" href={content.aboutButtonUrl || "/contato"}>
-            {content.aboutButtonText || "Vamos nos conhecer"} <ArrowUpRight size={18} />
-          </Link>
-          {content.instagram && <a className="about-instagram social-signature" href={content.instagram} target="_blank" rel="noopener noreferrer" aria-label="Acompanhe Mari no Instagram">@mari.imobbc <ArrowUpRight size={18}/></a>}
+          <div className="about-actions">
+            <Link className="button" href={content.aboutButtonUrl || "/contato"}>
+              {content.aboutButtonText || "Vamos nos conhecer"} <ArrowUpRight size={18} />
+            </Link>
+            {content.instagram && <a className="button secondary instagram-button" href={content.instagram} target="_blank" rel="noopener noreferrer" aria-label="Acompanhe Mari no Instagram"><Instagram size={19} /> @mari.imobbc</a>}
+          </div>
         </div>
       </section>
+      <ConsultationWizard embedded />
       <ContactSection />
     </>
   );
