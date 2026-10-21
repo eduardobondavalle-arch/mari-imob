@@ -366,8 +366,7 @@ export function Home({ featured, superFeatured = [], news = [] }: { featured: Li
           <Link className="button" href={content.aboutButtonUrl || "/contato"}>
             {content.aboutButtonText || "Vamos nos conhecer"} <ArrowUpRight size={18} />
           </Link>
-          {content.instagram && <a className="about-instagram" href={content.instagram} target="_blank" rel="noopener noreferrer">Acompanhe meu trabalho no Instagram <ArrowUpRight size={15}/></a>}
-          <p className="signature">Mari</p>
+          {content.instagram && <a className="about-instagram social-signature" href={content.instagram} target="_blank" rel="noopener noreferrer" aria-label="Acompanhe Mari no Instagram">@mari.imobbc <ArrowUpRight size={18}/></a>}
         </div>
       </section>
       <ContactSection />
