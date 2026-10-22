@@ -17,11 +17,11 @@ Todas geradas para este projeto com a skill [imagegen](C:/Users/eduar/.codex/ski
 
 | Arquivo | Finalidade |
 | --- | --- |
-| `public/images/coast.png` | Hero de paisagem costeira fictícia, inspirada na atmosfera do litoral catarinense; não é fotografia documental de uma cidade |
-| `public/images/living.png` | Sala de estar fictícia |
-| `public/images/dining.png` | Sala de jantar/cozinha fictícia |
-| `public/images/bedroom.png` | Quarto fictício |
-| `public/images/balcony.png` | Varanda fictícia |
+| `public/images/coast.webp` | Hero de paisagem costeira fictícia, inspirada na atmosfera do litoral catarinense; não é fotografia documental de uma cidade |
+| `public/images/living.webp` | Sala de estar fictícia |
+| `public/images/dining.webp` | Sala de jantar/cozinha fictícia |
+| `public/images/bedroom.webp` | Quarto fictício |
+| `public/images/balcony.webp` | Varanda fictícia |
 
 As quatro imagens de ambientes formam uma biblioteca de demonstração reutilizada entre registros, sempre sem duplicação dentro da mesma galeria. A biblioteca não comprova a existência de imóveis, vistas ou comodidades. Avisos aparecem nos cards, galerias, hero e compartilhamento. Para ofertas reais, substituir pelos arquivos correspondentes a cada imóvel e confirmar direitos de uso no adaptador.
 

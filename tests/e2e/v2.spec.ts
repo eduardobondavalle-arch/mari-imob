@@ -1,4 +1,14 @@
 ﻿import { test, expect } from "@playwright/test";
+function todayInSaoPaulo() {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value;
+  return `${value("year")}-${value("month")}-${value("day")}`;
+}
 test("V2: filtros, Kanban, comentários, agenda e seleção compartilhada", async ({
   page,
   browser,
@@ -7,7 +17,8 @@ test("V2: filtros, Kanban, comentários, agenda e seleção compartilhada", asyn
   test.setTimeout(180000);
   const unique = `Interface ${info.project.name} ${Date.now()}`,
     phone = `479${String(Date.now()).slice(-8)}`,
-    headers = { origin: baseURL! };
+    headers = { origin: baseURL! },
+    appointmentDate = todayInSaoPaulo();
   let leadId = "",
     stageId = "";
   const appointmentIds: string[] = [];
@@ -67,10 +78,10 @@ test("V2: filtros, Kanban, comentários, agenda e seleção compartilhada", asyn
     await appointment.getByLabel("Título", { exact: true }).fill(unique);
     await appointment
       .getByLabel("Início", { exact: true })
-      .fill("2026-10-19T14:00");
+      .fill(`${appointmentDate}T14:00`);
     await appointment
       .getByLabel("Término", { exact: true })
-      .fill("2026-10-19T15:00");
+      .fill(`${appointmentDate}T15:00`);
     await appointment
       .getByRole("button", { name: "Salvar compromisso" })
       .click();
@@ -95,10 +106,10 @@ test("V2: filtros, Kanban, comentários, agenda e seleção compartilhada", asyn
       .fill(`Sobreposição ${unique}`);
     await appointment
       .getByLabel("Início", { exact: true })
-      .fill("2026-10-19T14:30");
+      .fill(`${appointmentDate}T14:30`);
     await appointment
       .getByLabel("Término", { exact: true })
-      .fill("2026-10-19T15:30");
+      .fill(`${appointmentDate}T15:30`);
     await appointment
       .getByRole("button", { name: "Salvar compromisso" })
       .click();
@@ -182,6 +193,7 @@ test("V2: filtros, Kanban, comentários, agenda e seleção compartilhada", asyn
       fullPage: true,
     });
     await page.goto("/admin?tab=agenda");
+    await page.getByLabel("Data").fill(appointmentDate);
     await expect(page.locator(".calendar-event")).toHaveCount(2);
     await page.getByLabel("Visualização").selectOption("week");
     await expect(page.locator(".calendar-event")).toHaveCount(2);
@@ -244,17 +256,16 @@ test("V2: filtros, Kanban, comentários, agenda e seleção compartilhada", asyn
         headers,
         data: {},
       });
-    if (stageId)
-      await page.request.delete(`/api/admin/stages/${stageId}`, {
-        headers,
-        data: { destinationId: initial.id },
-      });
     if (leadId)
       await page.request.delete(`/api/admin/leads/${leadId}`, {
         headers,
         data: {},
       });
+    if (stageId)
+      await page.request.delete(`/api/admin/stages/${stageId}`, {
+        headers,
+        data: { destinationId: initial.id },
+      });
     await page.request.post("/api/admin/logout", { headers, data: {} });
   }
 });
-

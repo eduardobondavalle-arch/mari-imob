@@ -17,9 +17,9 @@ O projeto anterior era um catálogo demonstrativo de locação. A implementaçã
 
 **CSS nativo.** Mantido para preservar a arquitetura existente e evitar migração cosmética para Tailwind. Os estilos da Mari estão em `src/app/mari.css` e `src/styles/mari-admin.css`. O CSS antigo não é importado pelas páginas atuais.
 
-**Sessões opacas.** Tokens aleatórios de 256 bits em cookies HttpOnly/SameSite; somente SHA-256 dos tokens no banco. Secure em produção. Administração: 8 horas; cliente: 30 dias. Senhas com scrypt, salt individual e comparação em tempo constante. Troca de senha revoga as sessões administrativas. Recuperação por OTP revoga as sessões anteriores do cliente.
+**Sessões opacas.** Tokens aleatórios de 256 bits em cookies HttpOnly/SameSite; somente SHA-256 dos tokens no banco. Secure em produção. Administração: 8 horas; cliente: 30 dias. Senhas com scrypt, salt individual e comparação em tempo constante. Troca de senha revoga as sessões administrativas.
 
-**Primeira seleção.** Nome, telefone normalizado e consentimento criam um interessado novo e sua seleção em uma operação. Um telefone existente exige OTP; não autoriza leitura nem alterações com o telefone isoladamente. O simulador só funciona fora de produção. Códigos com cinco minutos, uso único, cinco tentativas e HMAC com segredo do ambiente.
+**Primeira seleção.** Nome, telefone normalizado e consentimento criam um interessado novo e sua seleção em uma operação. O navegador recebe uma sessão opaca. Um telefone existente nunca autoriza leitura nem alterações; sem uma sessão válida, a recuperação é assistida pela Mari.
 
 **Contato.** Solicitações são persistidas e podem reutilizar um telefone existente sem expor seu cadastro ou alterar seu nome. A criação de contato não estabelece sessão de acesso. Abrir WhatsApp não equivale a enviar mensagem; a aplicação não afirma entrega.
 
@@ -38,7 +38,6 @@ O projeto anterior era um catálogo demonstrativo de locação. A implementaçã
 ## Integrações externas
 
 - PostgreSQL externo com backups e TLS para produção.
-- Twilio Programmable Messaging para entrega de OTP; credenciais em variáveis privadas.
 - Armazenamento S3 compatível ou volume persistente no servidor. Vercel precisa S3; disco efêmero não serve para uploads persistentes.
 - Domínio HTTPS e `SITE_URL` correspondente à origem pública.
 

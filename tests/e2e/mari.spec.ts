@@ -16,7 +16,7 @@ test("páginas públicas, navegação e acessibilidade", async ({ page }, info) 
   if (info.project.name === "mobile") { await page.getByRole("button", { name: "Abrir menu" }).click(); await page.getByRole("navigation", { name: "Menu mobile" }).getByRole("link", { name: "Imóveis", exact: true }).click(); await expect(page).toHaveURL(/buscar/); }
   expect(errors).toEqual([]);
 });
-test("jornada real: cadastro, fotos, filtros, seleção, OTP, CRM e editor", async ({ page, browser, baseURL }, info) => {
+test("jornada real: cadastro sem SMS, fotos, filtros, seleção, CRM e editor", async ({ page, browser, baseURL }, info) => {
   test.setTimeout(180000);
   const origin = baseURL!;
   const headers = { origin };
@@ -45,7 +45,7 @@ test("jornada real: cadastro, fotos, filtros, seleção, OTP, CRM e editor", asy
     await page.getByRole("combobox", { name: "Status", exact: true }).selectOption("published");
     await page.getByLabel("Destacar na página inicial").check();
     await page.getByRole("combobox", { name: `Vista de teste ${unique}`, exact: true }).selectOption("true");
-    await page.locator('input[type="file"]').setInputFiles(resolve("public/images/living.png"));
+    await page.locator('input[type="file"]').setInputFiles(resolve("public/images/living.webp"));
     await expect(page.locator(".image-editor-item")).toHaveCount(1);
     await page.getByRole("button", { name: "Salvar imóvel", exact: true }).click();
     await expect(page.getByText("Imóvel salvo com sucesso.")).toBeVisible();
@@ -79,7 +79,8 @@ test("jornada real: cadastro, fotos, filtros, seleção, OTP, CRM e editor", asy
     expect(selected.items.map((p: { id: string }) => p.id)).toContain(propertyId);
     await guest.reload();
     await guest.goto("/minha-selecao");
-    await expect(guest.locator(".selection-strip > button")).toHaveCount(1);
+    await expect(guest.getByText("1 imóvel selecionado", { exact: true })).toBeVisible();
+    await expect(guest.locator(".cri-hero-title")).toContainText(title.toUpperCase());
     const crm = await (await page.request.get(`/api/admin/leads?q=${phone}`)).json();
     leadId = crm[0].id; expect(crm).toHaveLength(1); expect(crm[0].selection._count.items).toBe(1);
     const outsider = await browser.newContext({ extraHTTPHeaders: headers, httpCredentials: info.project.use.httpCredentials });
@@ -88,16 +89,11 @@ test("jornada real: cadastro, fotos, filtros, seleção, OTP, CRM e editor", asy
     expect((await outsider.request.delete(`/api/selection/${propertyId}`, { data: {} })).status()).toBe(401);
     expect((await outsider.request.get("/api/admin/leads")).status()).toBe(401);
     const duplicate = await outsider.request.post("/api/client/register", { data: { firstName: "Outro", phone, consent: true, propertyId } });
-    expect((await duplicate.json()).verificationRequired).toBe(true);
+    expect((await duplicate.json()).recoveryRequired).toBe(true);
     expect(await (await outsider.request.get("/api/client")).json()).toBeNull();
-    const otp = await (await outsider.request.post("/api/client/otp", { data: { phone } })).json();
-    expect(otp.development).toBe(true);
-    expect((await outsider.request.post("/api/client/verify", { data: { challengeId: otp.challengeId, code: "000000" } })).status()).toBe(400);
-    expect((await outsider.request.post("/api/client/verify", { data: { challengeId: otp.challengeId, code: otp.developmentCode } })).ok()).toBe(true);
-    expect((await (await outsider.request.get("/api/client")).json()).items).toHaveLength(1);
-    expect(await (await visitor.request.get("/api/client")).json()).toBeNull();
-    expect((await outsider.request.post("/api/client/verify", { data: { challengeId: otp.challengeId, code: otp.developmentCode } })).status()).toBe(400);
-    expect((await outsider.request.post("/api/contact", { data: { consent: true, propertyId, message: "Contato automatizado de teste" } })).ok()).toBe(true);
+    expect((await outsider.request.post("/api/client/otp", { data: { phone } })).status()).toBe(404);
+    expect((await (await visitor.request.get("/api/client")).json()).items).toHaveLength(1);
+    expect((await visitor.request.post("/api/contact", { data: { consent: true, propertyId, message: "Contato automatizado de teste" } })).ok()).toBe(true);
     const detail = await (await page.request.get(`/api/admin/leads/${leadId}`)).json(); expect(detail.requests).toHaveLength(1);
     expect((await page.request.post("/api/admin/properties", { headers: { origin: "https://malicioso.invalid" }, data: {} })).status()).toBe(403);
     const malicious = await page.request.post("/api/admin/upload", { headers, multipart: { file: { name: "malicioso.svg", mimeType: "image/svg+xml", buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>') } } }); expect(malicious.status()).toBe(400);
