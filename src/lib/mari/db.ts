@@ -1,6 +1,11 @@
 import { PrismaClient } from "@/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 const globalDb = globalThis as unknown as { mariDb?: PrismaClient };
+const configuredPoolMax = Number(process.env.DATABASE_POOL_MAX);
+const remotePoolMax =
+  Number.isInteger(configuredPoolMax) && configuredPoolMax >= 1
+    ? Math.min(configuredPoolMax, 10)
+    : 2;
 export const db =
   globalDb.mariDb ??
   new PrismaClient({
@@ -17,7 +22,7 @@ export const db =
           process.env.DATABASE_URL || "127.0.0.1:54329/",
         )
           ? 1
-          : 3,
+          : remotePoolMax,
       connectionTimeoutMillis: 10000,
     }),
   });

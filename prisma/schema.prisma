@@ -44,6 +44,7 @@ model Lead {
   @@index([createdAt])
   @@index([firstName])
   @@index([stageId, position])
+  @@index([lastActivityAt(sort: Desc)], map: "Lead_lastActivityAt_idx")
 }
 
 model Consultation {
@@ -65,6 +66,8 @@ model Session {
   expiresAt DateTime
   createdAt DateTime @default(now())
   @@index([expiresAt])
+  @@index([adminId], map: "Session_adminId_idx")
+  @@index([leadId], map: "Session_leadId_idx")
 }
 
 model OtpChallenge {
@@ -136,6 +139,9 @@ model Property {
   @@index([city, neighborhood, type])
   @@index([price])
   @@index([cityId])
+  @@index([status, purpose, featured(sort: Desc), createdAt(sort: Desc), id], map: "Property_status_purpose_featured_createdAt_id_idx")
+  @@index([status, purpose, superFeatured, updatedAt(sort: Desc)], map: "Property_status_purpose_superFeatured_updatedAt_idx")
+  @@index([status, purpose, price, id], map: "Property_status_purpose_price_id_idx")
 }
 
 model Media {
@@ -238,6 +244,7 @@ model ContactRequest {
   property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
   createdAt  DateTime  @default(now())
   @@index([leadId, createdAt])
+  @@index([status, createdAt(sort: Desc)], map: "ContactRequest_status_createdAt_idx")
 }
 
 model SiteSettings {

@@ -5,7 +5,10 @@ import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hashPassword } from "../src/lib/mari/crypto";
 import { defaultContent } from "../src/lib/mari/defaults";
-const production = process.env.APP_ENV === "production";
+const production =
+  process.env.VERCEL_ENV !== undefined
+    ? process.env.VERCEL_ENV === "production"
+    : process.env.APP_ENV === "production";
 if (
   production &&
   (!process.env.INITIAL_ADMIN_PASSWORD ||

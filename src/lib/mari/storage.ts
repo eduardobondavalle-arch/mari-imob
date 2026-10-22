@@ -140,16 +140,37 @@ export async function uploadMedia(request: Request) {
   });
   return { ...media, url: `/media/${key}` };
 }
-export async function readMedia(key: string) {
+export async function readMedia(key: string, allowPrivate = false) {
   assert(/^[a-f0-9-]{36}\.webp$/.test(key), 404, "Imagem não encontrada.");
-  const row = await db.media.findUnique({ where: { key } });
+  const row = await db.media.findUnique({
+    where: { key },
+    include: { property: { select: { status: true } } },
+  });
   assert(row, 404, "Imagem não encontrada.");
+  let isPublic = row.property?.status === "published";
+  if (!isPublic && !row.propertyId && !row.ownerSubmissionId) {
+    const [settings, news] = await Promise.all([
+      db.siteSettings.findUnique({
+        where: { id: "main" },
+        select: { published: true },
+      }),
+      db.news.findFirst({
+        where: { published: true, coverImage: { contains: key } },
+        select: { id: true },
+      }),
+    ]);
+    isPublic =
+      Boolean(news) || JSON.stringify(settings?.published).includes(key);
+  }
+  assert(isPublic || allowPrivate, 404, "Imagem não encontrada.");
+  let data: Uint8Array;
   if (process.env.STORAGE_PROVIDER === "s3") {
     const object = await s3().send(
       new GetObjectCommand({ Bucket: process.env.S3_BUCKET, Key: key }),
     );
     assert(object.Body, 404, "Imagem não encontrada.");
-    return new Uint8Array(await object.Body.transformToByteArray());
+    data = new Uint8Array(await object.Body.transformToByteArray());
+    return { data, isPublic };
   }
   if (process.env.STORAGE_PROVIDER === "supabase") {
     const storage = supabaseStorage();
@@ -159,9 +180,11 @@ export async function readMedia(key: string) {
     });
     if (response.status === 404) assert(false, 404, "Imagem não encontrada.");
     await assertStorageResponse(response);
-    return new Uint8Array(await response.arrayBuffer());
+    data = new Uint8Array(await response.arrayBuffer());
+    return { data, isPublic };
   }
-  return new Uint8Array(await readFile(/* turbopackIgnore: true */ resolve(storageRoot(), key)));
+  data = new Uint8Array(await readFile(/* turbopackIgnore: true */ resolve(storageRoot(), key)));
+  return { data, isPublic };
 }
 export async function deleteMedia(id: string) {
   const row = await db.media.findUnique({ where: { id } });
@@ -170,6 +193,11 @@ export async function deleteMedia(id: string) {
     !row.propertyId,
     409,
     "Remova a imagem do imóvel e salve antes de excluir o arquivo.",
+  );
+  assert(
+    !row.ownerSubmissionId,
+    409,
+    "A fotografia está vinculada a uma captação de proprietário.",
   );
   const content = await db.siteSettings.findUnique({ where: { id: "main" } });
   assert(

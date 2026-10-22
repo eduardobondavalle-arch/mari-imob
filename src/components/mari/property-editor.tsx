@@ -386,6 +386,7 @@ export function PropertyEditor({
             <div key={image.id} className="image-editor-item">
               <Image
                 src={`/media/${image.key}`}
+                unoptimized
                 alt={image.alt}
                 width={260}
                 height={180}

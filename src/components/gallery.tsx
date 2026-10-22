@@ -40,7 +40,15 @@ export function PropertyGallery({
             }}
             aria-label={`Ampliar foto ${i + 1} de ${title}`}
           >
-            <SafeGalleryImage media={m} priority={i === 0} />
+            <SafeGalleryImage
+              media={m}
+              preload={i === 0}
+              sizes={
+                i === 0
+                  ? "(max-width: 700px) 100vw, 66vw"
+                  : "(max-width: 700px) 50vw, 33vw"
+              }
+            />
             {i === 2 && (
               <span className="gallery-view">
                 <Grid2X2 size={16} /> Ver {photos.length} fotos
@@ -76,7 +84,7 @@ export function PropertyGallery({
           <SafeGalleryImage
             key={photos[index].id}
             media={photos[index]}
-            priority
+            sizes="100vw"
           />
         </div>
         {photos.length > 1 && (
@@ -115,10 +123,12 @@ export function PropertyGallery({
 }
 function SafeGalleryImage({
   media,
-  priority = false,
+  preload = false,
+  sizes,
 }: {
   media: PropertyMedia;
-  priority?: boolean;
+  preload?: boolean;
+  sizes: string;
 }) {
   const [error, setError] = useState(false);
   return error ? (
@@ -131,8 +141,8 @@ function SafeGalleryImage({
       src={media.url}
       alt={media.alt}
       fill
-      sizes="(max-width: 700px) 100vw, 70vw"
-      priority={priority}
+      sizes={sizes}
+      preload={preload}
       onError={() => setError(true)}
     />
   );

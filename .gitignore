@@ -1,5 +1,6 @@
 node_modules/
 .next/
+next-env.d.ts
 .env*
 !.env.example
 playwright-report/
@@ -10,6 +11,3 @@ test-results/
 src/generated/
 *.log
 .vercel/
-
-.vercel
-.env*

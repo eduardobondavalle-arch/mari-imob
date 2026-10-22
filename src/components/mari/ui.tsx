@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { X, LoaderCircle, Upload } from "lucide-react";
 import Image from "next/image";
 export class ApiError extends Error {
@@ -163,21 +164,26 @@ export function Picture({
   src,
   alt,
   className = "",
-  priority = false,
+  preload = false,
+  sizes = "(max-width: 700px) 100vw, 60vw",
 }: {
   src: string;
   alt: string;
   className?: string;
-  priority?: boolean;
+  preload?: boolean;
+  sizes?: string;
 }) {
+  const directPrivatePreview =
+    usePathname() === "/editor-preview" && src.startsWith("/media/");
   return (
     <div className={`picture ${className}`}>
       <Image
         src={src}
         alt={alt}
         fill
-        sizes="(max-width: 700px) 100vw, 60vw"
-        priority={priority}
+        sizes={sizes}
+        preload={preload}
+        unoptimized={directPrivatePreview}
       />
     </div>
   );

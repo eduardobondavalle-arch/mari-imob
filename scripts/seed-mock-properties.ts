@@ -22,11 +22,11 @@ async function prepareImages() {
   await mkdir(storageRoot(), { recursive: true });
 
   const sourceFiles = [
-    { file: "living.png", defaultAlt: "Living amplo e integrado de alto padrão" },
-    { file: "balcony.png", defaultAlt: "Sacada gourmet com vista deslumbrante" },
-    { file: "bedroom.png", defaultAlt: "Suíte master com closet e acabamento refinado" },
-    { file: "dining.png", defaultAlt: "Sala de jantar integrada com espaço gourmet" },
-    { file: "coast.png", defaultAlt: "Vista espetacular para a orla e o litoral" },
+    { file: "living.webp", defaultAlt: "Living amplo e integrado de alto padrão" },
+    { file: "balcony.webp", defaultAlt: "Sacada gourmet com vista deslumbrante" },
+    { file: "bedroom.webp", defaultAlt: "Suíte master com closet e acabamento refinado" },
+    { file: "dining.webp", defaultAlt: "Sala de jantar integrada com espaço gourmet" },
+    { file: "coast.webp", defaultAlt: "Vista espetacular para a orla e o litoral" },
   ];
 
   const processedTemplates: { buffer: Buffer; width: number; height: number; size: number; defaultAlt: string }[] = [];
@@ -621,4 +621,3 @@ main()
     process.exit(1);
   })
   .finally(() => db.$disconnect());
-

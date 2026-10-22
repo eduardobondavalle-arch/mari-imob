@@ -30,7 +30,7 @@ export default async function Page({ params }: Props) {
     notFound();
   }
   return <article className="container section news-article">
-    {news.coverImage && <div className="news-cover"><Image src={news.coverImage} alt="" fill sizes="(max-width: 900px) 100vw, 900px"/></div>}
+    {news.coverImage && <div className="news-cover"><Image src={news.coverImage} alt={news.title} fill sizes="(max-width: 900px) 100vw, 900px" preload/></div>}
     <p className="eyebrow">{news.city} · {new Date(news.publishedAt).toLocaleDateString("pt-BR")}</p>
     <h1>{news.title}</h1>
     <p className="lead">{news.summary}</p>

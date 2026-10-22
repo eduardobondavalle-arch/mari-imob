@@ -10,7 +10,7 @@ export default function Page() {
         src="/images/owners-hero-v1.webp"
         alt="Entrega das chaves de um imóvel com Balneário Camboriú ao fundo"
         fill
-        priority
+        preload
         sizes="100vw"
       />
       <span className="owners-hero-shade" aria-hidden="true" />

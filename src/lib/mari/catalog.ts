@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { Prisma } from "@/generated/prisma/client";
 import { db } from "./db";
 import type { Field, Listing, SiteContent } from "./types";
@@ -25,7 +26,8 @@ export function listingDto(row: DbListing, admin = false): Listing {
     featured: row.featured,
     superFeatured: row.superFeatured,
     price: row.price === null ? null : Number(row.price),
-    condominiumFee: row.condominiumFee === null ? null : Number(row.condominiumFee),
+    condominiumFee:
+      row.condominiumFee === null ? null : Number(row.condominiumFee),
     condominiumPeriod: row.condominiumPeriod,
     iptuFee: row.iptuFee === null ? null : Number(row.iptuFee),
     iptuPeriod: row.iptuPeriod,
@@ -68,13 +70,13 @@ export function listingDto(row: DbListing, admin = false): Listing {
       })),
   };
 }
-export async function getContent() {
+export const getContent = cache(async function getContent() {
   const settings = await db.siteSettings.findUnique({ where: { id: "main" } });
   return {
     ...defaultContent,
     ...((settings?.published as Partial<SiteContent>) || {}),
   };
-}
+});
 export async function publicFields() {
   return (await db.customField.findMany({
     where: { public: true, filterable: true, archived: false },
@@ -95,10 +97,32 @@ export async function homeSuperFeatured() {
   });
   return rows.map((row) => listingDto(row));
 }
+export async function homeFeatured() {
+  const rows = await db.property.findMany({
+    where: {
+      status: "published",
+      purpose: { in: ["sale", "rent"] },
+      featured: true,
+    },
+    include: listingInclude,
+    orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+    take: 6,
+  });
+  return rows.map((row) => listingDto(row));
+}
 export async function searchCatalog(params: URLSearchParams) {
   const fields = await publicFields();
   const where = catalogWhere(params, fields);
-  const total = await db.property.count({ where });
+  const totalPromise = db.property.count({ where });
+  const locationsPromise = db.property.findMany({
+    where: { status: "published", purpose: { in: ["sale", "rent"] } },
+    select: { city: true, cityId: true, neighborhood: true, type: true },
+    distinct: ["city", "neighborhood", "type"],
+  });
+  const tagsPromise = db.tag.findMany({ orderBy: { name: "asc" } });
+  const citiesPromise = db.city.findMany({ orderBy: { name: "asc" } });
+  const taxonomiesPromise = db.taxonomy.findMany({ orderBy: { name: "asc" } });
+  const total = await totalPromise;
   const pageSize = 12;
   const pages = Math.max(1, Math.ceil(total / pageSize));
   const requestedPage = Number(params.get("page"));
@@ -113,19 +137,20 @@ export async function searchCatalog(params: URLSearchParams) {
       : sort === "price-desc"
         ? [{ price: { sort: "desc", nulls: "last" } }, { id: "asc" }]
         : [{ featured: "desc" }, { createdAt: "desc" }, { id: "asc" }];
-  const items = await db.property.findMany({
+  const itemsPromise = db.property.findMany({
     where,
     include: listingInclude,
     orderBy,
     skip: (page - 1) * pageSize,
     take: pageSize,
   });
-  const locations = await db.property.findMany({
-    where: { status: "published", purpose: { in: ["sale", "rent"] } },
-    select: { city: true, cityId: true, neighborhood: true, type: true },
-    distinct: ["city", "neighborhood", "type"],
-  });
-  const tags = await db.tag.findMany({ orderBy: { name: "asc" } });
+  const [items, locations, tags, cities, taxonomies] = await Promise.all([
+    itemsPromise,
+    locationsPromise,
+    tagsPromise,
+    citiesPromise,
+    taxonomiesPromise,
+  ]);
   return {
     items: items.map((row) => listingDto(row)),
     total,
@@ -134,14 +159,14 @@ export async function searchCatalog(params: URLSearchParams) {
     fields,
     locations,
     tags,
-    cities: await db.city.findMany({ orderBy: { name: "asc" } }),
-    taxonomies: await db.taxonomy.findMany({ orderBy: { name: "asc" } }),
+    cities,
+    taxonomies,
   };
 }
-export async function getListing(slug: string) {
+export const getListing = cache(async function getListing(slug: string) {
   const row = await db.property.findFirst({
     where: { slug, status: "published", purpose: { in: ["sale", "rent"] } },
     include: listingInclude,
   });
   return row ? listingDto(row) : null;
-}
+});

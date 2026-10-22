@@ -22,8 +22,9 @@ import { Modal, Picture } from "./ui";
 import { PropertyDetail, PropertyGrid, whatsappLink } from "./property";
 import { type Listing, type Field, purposes } from "@/lib/mari/types";
 import { ConsultationWizard } from "./consultation-wizard";
-export function Brand() {
+export function Brand({ preload = false }: { preload?: boolean } = {}) {
   const { content } = useMari();
+  const editorPreview = usePathname() === "/editor-preview";
   return (
     <Link
       href="/"
@@ -37,7 +38,8 @@ export function Brand() {
           width={300}
           height={91}
           className="brand-image"
-          priority
+          preload={preload}
+          unoptimized={editorPreview && content.logo.startsWith("/media/")}
         />
       ) : (
         <>
@@ -76,7 +78,7 @@ export function PublicFrame({ children }: { children: React.ReactNode }) {
       </div>
       <header className="site-header">
         <div className="container header-inner">
-          <Brand />
+          <Brand preload />
           <nav aria-label="Menu principal" className="desktop-nav">
             {links.map(([label, href]) => (
               <Link key={label} href={href}>
@@ -176,7 +178,16 @@ export function PublicFrame({ children }: { children: React.ReactNode }) {
         rel="noopener noreferrer"
         aria-label="Conversar com a Mari no WhatsApp"
       >
-        <Image src={content.whatsappPhoto || "/mari-portrait.png"} alt="Mari" fill sizes="64px" />
+        <Image
+          src={content.whatsappPhoto || "/mari-portrait.webp"}
+          alt="Mari"
+          fill
+          sizes="64px"
+          unoptimized={
+            pathname === "/editor-preview" &&
+            content.whatsappPhoto.startsWith("/media/")
+          }
+        />
         <span><MessageCircle size={15} /></span>
       </a>}
       {menu && (
@@ -205,6 +216,7 @@ export function PublicFrame({ children }: { children: React.ReactNode }) {
 type HomeNews = { id: string; slug: string; title: string; summary: string; content: string; sourceUrl: string; city: string; coverImage: string; publishedAt: string };
 export function Home({ featured, superFeatured = [], news = [] }: { featured: Listing[]; superFeatured?: Listing[]; news?: HomeNews[] }) {
   const { content, contact } = useMari();
+  const editorPreview = usePathname() === "/editor-preview";
   const [superOpen, setSuperOpen] = useState<Listing | null>(null);
   useEffect(() => {
     const onPopState = () => setSuperOpen(null);
@@ -229,7 +241,8 @@ export function Home({ featured, superFeatured = [], news = [] }: { featured: Li
               alt="Paisagem costeira ilustrativa"
               fill
               sizes="100vw"
-              priority
+              preload
+              unoptimized={editorPreview && content.heroImage.startsWith("/media/")}
             />
           )}
         </div>
@@ -247,7 +260,7 @@ export function Home({ featured, superFeatured = [], news = [] }: { featured: Li
         <span className="hero-location">
           <MapPin size={14} /> Santa Catarina, Brasil
         </span>
-        {content.heroImage === "/images/coast.png" && (
+        {["/images/coast.png", "/images/coast.webp"].includes(content.heroImage) && (
           <span className="image-credit">Paisagem ilustrativa</span>
         )}
       </section>
@@ -259,9 +272,9 @@ export function Home({ featured, superFeatured = [], news = [] }: { featured: Li
           <div className="section-heading"><div><p className="eyebrow">CURADORIA ESPECIAL DA MARI</p><h2>Super destaques</h2><p>Imóveis selecionados para quem procura algo singular.</p></div></div>
           <div className="super-featured-grid">
             {superFeatured.map((property) => <button type="button" className="super-featured-card" onClick={() => openSuper(property)} key={property.id}>
-              {property.images[0] ? <Picture src={`/media/${property.images[0].key}`} alt={property.images[0].alt || property.title} /> : <div className="picture super-placeholder" />}
+              {property.images[0] ? <Picture src={`/media/${property.images[0].key}`} alt={property.images[0].alt || property.title} sizes="(max-width: 760px) 100vw, 33vw" /> : <div className="picture super-placeholder" />}
               <span className="super-featured-shade" />
-              {property.images.length > 1 && <div className="super-thumbnails">{property.images.slice(1,4).map((photo) => <Picture key={photo.id} src={`/media/${photo.key}`} alt="" />)}</div>}
+              {property.images.length > 1 && <div className="super-thumbnails">{property.images.slice(1,4).map((photo) => <Picture key={photo.id} src={`/media/${photo.key}`} alt="" sizes="72px" />)}</div>}
               <div className="super-featured-copy"><small>{property.city} · {property.neighborhood}</small><h3>{property.title}</h3>{property.headline && <p>{property.headline}</p>}<span className="super-facts">{property.bedrooms != null && `${property.bedrooms} dorm.`}{property.area != null && ` · ${property.area} m²`}{property.parking != null && ` · ${property.parking} vagas`}</span><strong>{property.price ? `R$ ${property.price.toLocaleString("pt-BR")}` : "Valor sob consulta"}</strong><span>Conhecer este imóvel <ArrowUpRight size={17}/></span></div>
             </button>)}
           </div>
@@ -299,7 +312,7 @@ export function Home({ featured, superFeatured = [], news = [] }: { featured: Li
         )}
       </section>
       <section className="owner-home-call">
-        <Image className="owner-home-image" src="/images/owners-hero-v1.webp" alt="" fill sizes="100vw" loading="eager" />
+        <Image className="owner-home-image" src="/images/owners-hero-v1.webp" alt="" fill sizes="100vw" />
         <span className="owner-home-shade" aria-hidden="true" />
         <div className="container owner-home-inner"><div><p className="eyebrow">PARA PROPRIETÁRIOS</p><h2>Seu imóvel merece as melhores oportunidades.</h2><p>Conte um pouco sobre ele e converse com a Mari sobre a melhor estratégia de venda ou locação.</p></div><Link className="button light" href="/proprietarios">Quero anunciar meu imóvel <ArrowUpRight size={17}/></Link></div>
       </section>
@@ -332,7 +345,7 @@ export function Home({ featured, superFeatured = [], news = [] }: { featured: Li
             <div className="regional-news">
               <div className="regional-news-heading"><span>NOTÍCIAS DA REGIÃO</span><small>Informação para escolher bem</small></div>
               {news.map((item) => <Link href={!item.content && item.sourceUrl ? item.sourceUrl : `/noticias/${item.slug}`} target={!item.content && item.sourceUrl ? "_blank" : undefined} rel={!item.content && item.sourceUrl ? "noopener noreferrer" : undefined} key={item.id} className="regional-news-card">
-                {item.coverImage && <Picture src={item.coverImage} alt="" />}
+                {item.coverImage && <Picture src={item.coverImage} alt="" sizes="(max-width: 700px) 68px, 88px" />}
                 <div><small>{item.city} · {new Date(item.publishedAt).toLocaleDateString("pt-BR")}</small><h3>{item.title}</h3><p>{item.summary}</p></div>
                 <ArrowUpRight size={18} />
               </Link>)}
@@ -349,11 +362,12 @@ export function Home({ featured, superFeatured = [], news = [] }: { featured: Li
         </div>
       </section>
       <section className="container section about-section">
-        {(content.aboutImage || "/mari-portrait.png") ? (
+        {(content.aboutImage || "/mari-portrait.webp") ? (
           <Picture
-            src={content.aboutImage || "/mari-portrait.png"}
+            src={content.aboutImage || "/mari-portrait.webp"}
             alt="Mari Corretora de Imóveis"
             className="about-photo"
+            sizes="(max-width: 700px) 100vw, 50vw"
           />
         ) : (
           <div className="about-monogram">
