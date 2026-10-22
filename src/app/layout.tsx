@@ -8,10 +8,12 @@ import { MariProvider } from "@/components/mari/provider";
 import { PublicFrame } from "@/components/mari/site";
 import { getContent } from "@/lib/mari/catalog";
 import { siteOrigin } from "@/config/origin";
+import { isProductionDeployment } from "@/config/deployment";
 export const dynamic = "force-dynamic";
 export async function generateMetadata(): Promise<Metadata> {
   const content = await getContent();
-  return { metadataBase: new URL(siteOrigin), title: { default: `${content.brandName} Corretora de Imóveis | Seu lugar no litoral`, template: `%s | ${content.brandName} Imóveis` }, description: content.heroSubtitle, robots: { index: process.env.APP_ENV === "production", follow: process.env.APP_ENV === "production" }, icons: { icon: content.favicon || "/brand/mari-imob-favicon.png" }, openGraph: { type: "website", locale: "pt_BR", siteName: `${content.brandName} Corretora de Imóveis`, title: `${content.brandName} Corretora de Imóveis`, description: content.heroSubtitle, images: content.heroImage ? [{ url: content.heroImage }] : [] } };
+  const production = isProductionDeployment();
+  return { metadataBase: new URL(siteOrigin), title: { default: `${content.brandName} Corretora de Imóveis | Seu lugar no litoral`, template: `%s | ${content.brandName} Imóveis` }, description: content.heroSubtitle, robots: { index: production, follow: production }, icons: { icon: content.favicon || "/brand/mari-imob-favicon.png" }, openGraph: { type: "website", locale: "pt_BR", siteName: `${content.brandName} Corretora de Imóveis`, title: `${content.brandName} Corretora de Imóveis`, description: content.heroSubtitle, images: content.heroImage ? [{ url: content.heroImage }] : [] } };
 }
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const content = await getContent();

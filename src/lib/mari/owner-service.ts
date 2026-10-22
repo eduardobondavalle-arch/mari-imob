@@ -18,7 +18,7 @@ export async function saveOwnerSubmission(input: unknown) {
   const data = schema.parse(input);
   return db.$transaction(async (tx) => {
     const stage = await tx.leadStage.findFirstOrThrow({ where: { isDefault: true } });
-    const lead = await tx.lead.upsert({ where: { phone: data.phone }, create: { firstName: data.firstName, phone: data.phone, source: "Captação de proprietário", consentAt: new Date(), stageId: stage.id, position: await tx.lead.count({ where: { stageId: stage.id } }) }, update: { firstName: data.firstName, lastActivityAt: new Date() } });
+    const lead = await tx.lead.upsert({ where: { phone: data.phone }, create: { firstName: data.firstName, phone: data.phone, source: "Captação de proprietário", consentAt: new Date(), stageId: stage.id, position: await tx.lead.count({ where: { stageId: stage.id } }) }, update: { lastActivityAt: new Date() } });
     const photos = await tx.media.findMany({ where: { id: { in: data.photoIds }, propertyId: null, ownerSubmissionId: null } });
     assert(photos.length === data.photoIds.length, 400, "Uma fotografia não está disponível.");
     const { photoIds, firstName: _name, phone: _phone, consent: _consent, ...fields } = data;

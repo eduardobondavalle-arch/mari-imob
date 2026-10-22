@@ -1,6 +1,6 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Heart, ArrowRight, ShieldCheck } from "lucide-react";
 import { api, Modal, Notice } from "./ui";
@@ -11,7 +11,7 @@ import {
   type Listing,
   type SiteContent,
 } from "@/lib/mari/types";
-type Intent = { kind: "register" | "login" | "contact"; property?: Listing };
+type Intent = { kind: "register" | "contact"; property?: Listing };
 type ContextValue = {
   content: SiteContent;
   client: ClientState;
@@ -42,6 +42,7 @@ export function MariProvider({
   const [error, setError] = useState("");
   const [presentationNotice, setPresentationNotice] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   async function refresh() {
     try {
       setClient(await api<ClientState>("client"));
@@ -107,7 +108,11 @@ export function MariProvider({
         ready,
         refresh,
         select,
-        openLogin: () => presentation ? setPresentationNotice(true) : setIntent({ kind: "login" }),
+        openLogin: () => {
+          if (presentation) setPresentationNotice(true);
+          else if (client) router.push("/minha-selecao");
+          else setIntent({ kind: "register" });
+        },
         contact: (property) => presentation ? setPresentationNotice(true) : setIntent({ kind: "contact", property }),
         logout: async () => {
           await api("client/logout", {});
@@ -130,7 +135,7 @@ export function MariProvider({
         )}
         {demo && (
           <div style={{ padding: "9px 16px", textAlign: "center", background: "var(--primary)", color: "#fff", fontSize: 12, lineHeight: 1.5 }}>
-            Demonstração completa · Alterações salvas apenas nesta cópia · Use dados fictícios · SMS simulado{" "}
+            Demonstração completa · Alterações salvas apenas nesta cópia · Use dados fictícios{" "}
             <Link href="/admin" style={{ color: "#fff", textDecoration: "underline", marginLeft: 8 }}>Painel administrativo</Link>
           </div>
         )}
@@ -171,16 +176,11 @@ function IdentityFlow({
   onComplete: () => Promise<void>;
 }) {
   const { client } = useMari();
-  const [step, setStep] = useState(intent.kind);
+  const step = intent.kind;
   const [firstName, setFirstName] = useState(client?.firstName || "");
   const [phone, setPhone] = useState(phoneMask(client?.phone || ""));
   const [consent, setConsent] = useState(false);
-  const [code, setCode] = useState("");
-  const [challenge, setChallenge] = useState<{
-    challengeId: string;
-    developmentCode?: string;
-  } | null>(null);
-  const [needsName, setNeedsName] = useState(false);
+  const [recoveryRequired, setRecoveryRequired] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -208,7 +208,7 @@ function IdentityFlow({
         return;
       }
       if (step === "register") {
-        const result = await api<{ verificationRequired?: boolean }>(
+        const result = await api<{ recoveryRequired?: boolean }>(
           "client/register",
           {
             firstName,
@@ -217,28 +217,10 @@ function IdentityFlow({
             propertyId: intent.property?.id,
           },
         );
-        if (result.verificationRequired) {
-          setStep("login");
-          setChallenge(
-            await api("client/otp", { phone: normalizePhone(phone) }),
-          );
+        if (result.recoveryRequired) {
+          setRecoveryRequired(true);
           return;
         }
-      } else if (!challenge) {
-        setChallenge(await api("client/otp", { phone: normalizePhone(phone) }));
-        return;
-      } else {
-        const result = await api<{ needsName?: boolean }>("client/verify", {
-          challengeId: challenge.challengeId,
-          code,
-          ...(firstName ? { firstName } : {}),
-          consent,
-        });
-        if (result.needsName) {
-          setNeedsName(true);
-          return;
-        }
-        if (intent.property) await api(`selection/${intent.property.id}`, {});
       }
       await onComplete();
       onClose();
@@ -273,15 +255,12 @@ function IdentityFlow({
             <p>
               {step === "register"
                 ? "Monte sua seleção para guardar suas opções favoritas, comparar imóveis e compartilhar com quem quiser."
-                : step === "login"
-                  ? "Acesse com um código de verificação pelo seu telefone."
-                  : intent.property
+                : intent.property
                     ? `Seu interesse em ${intent.property.title} será registrado para atendimento.`
                     : "Conte o que você procura. A Mari poderá entrar em contato com você."}
             </p>
             <form className="stack" onSubmit={submit}>
-              {(step !== "login" || needsName) && (
-                <label>
+              <label>
                   Primeiro nome
                   <input
                     value={firstName}
@@ -291,8 +270,7 @@ function IdentityFlow({
                     maxLength={60}
                     autoComplete="given-name"
                   />
-                </label>
-              )}
+              </label>
               <label>
                 Telefone com WhatsApp
                 <input
@@ -300,47 +278,10 @@ function IdentityFlow({
                   value={phone}
                   onChange={(e) => setPhone(phoneMask(e.target.value))}
                   required
-                  disabled={Boolean(challenge)}
                   placeholder="(47) 99999-9999"
                   autoComplete="tel"
                 />
               </label>
-              {challenge && (
-                <>
-                  <label>
-                    Código de verificação
-                    <input
-                      value={code}
-                      onChange={(e) =>
-                        setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                      }
-                      inputMode="numeric"
-                      pattern="[0-9]{6}"
-                      autoComplete="one-time-code"
-                      required
-                      maxLength={6}
-                    />
-                  </label>
-                  {challenge.developmentCode && (
-                    <Notice>
-                      Simulador de desenvolvimento · código:{" "}
-                      <strong>{challenge.developmentCode}</strong>. Nenhum SMS
-                      foi enviado.
-                    </Notice>
-                  )}
-                  <button
-                    type="button"
-                    className="text-button"
-                    onClick={() => {
-                      setChallenge(null);
-                      setCode("");
-                      setError("");
-                    }}
-                  >
-                    Alterar telefone ou solicitar outro código
-                  </button>
-                </>
-              )}
               {step === "contact" && (
                 <label>
                   O que você procura? <small>(opcional)</small>
@@ -352,8 +293,7 @@ function IdentityFlow({
                   />
                 </label>
               )}
-              {(step !== "login" || needsName) && (
-                <label className="check-line">
+              <label className="check-line">
                   <input
                     type="checkbox"
                     checked={consent}
@@ -371,34 +311,34 @@ function IdentityFlow({
                       : "manter minha seleção e entrar em contato sobre os imóveis"}
                     .
                   </span>
-                </label>
-              )}
+              </label>
               <Notice error>{error}</Notice>
+              {recoveryRequired && (
+                <Notice>
+                  Este telefone já possui um cadastro. Por segurança, os dados
+                  e imóveis salvos não são liberados apenas com o número.
+                  Fale com a Mari para recuperar o acesso.
+                </Notice>
+              )}
               <button className="button full" disabled={busy}>
                 {busy
                   ? "Aguarde…"
                   : step === "register"
                     ? "Criar minha seleção"
-                    : step === "contact"
-                      ? "Confirmar solicitação"
-                      : challenge
-                        ? "Verificar e acessar"
-                        : "Receber código"}
+                    : "Confirmar solicitação"}
                 <ArrowRight size={18} />
               </button>
             </form>
             <p className="privacy-note">
               <ShieldCheck size={15} /> Seus dados ficam protegidos.
             </p>
-            {step === "login" && (
-              <Link
-                className="admin-access"
-                href="/admin/login"
-                onClick={onClose}
-              >
-                Acesso administrativo
-              </Link>
-            )}
+            <Link
+              className="admin-access"
+              href="/admin/login"
+              onClick={onClose}
+            >
+              Acesso administrativo
+            </Link>
           </>
         )}
       </div>

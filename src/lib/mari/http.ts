@@ -1,4 +1,5 @@
 import { ZodError } from "zod";
+import { isIP } from "node:net";
 import { db } from "./db";
 import { digest } from "./crypto";
 import { allowedOrigin } from "./request-origin";
@@ -75,10 +76,24 @@ export async function rateLimit(key: string, limit = 10, seconds = 900) {
   );
 }
 export function requestIp(request: Request) {
-  // Only trust this header when a controlled reverse proxy overwrites it.
-  return process.env.TRUST_PROXY === "true"
-    ? request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown"
-    : "local";
+  const forwardedIp = (header: string) => {
+    const value = request.headers.get(header)?.split(",", 1)[0]?.trim();
+    return value && isIP(value) ? value : null;
+  };
+
+  // Vercel owns and sanitizes its platform-specific forwarding header. Never
+  // fall back to a client-controlled forwarding header in this environment.
+  if (process.env.VERCEL === "1")
+    return forwardedIp("x-vercel-forwarded-for") || "unknown";
+
+  // Other deployments must explicitly assert that their reverse proxy
+  // overwrites X-Forwarded-For before the application receives the request.
+  if (process.env.TRUST_PROXY === "true")
+    return forwardedIp("x-forwarded-for") || "unknown";
+
+  // A shared bucket is conservative: it may throttle more aggressively, but it
+  // never grants an attacker fresh buckets from untrusted header values.
+  return "unknown";
 }
 export function errorResponse(error: unknown) {
   if (error instanceof HttpError)

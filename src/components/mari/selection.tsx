@@ -40,7 +40,12 @@ export function SelectionPage() {
       {client?.items.length ? (
         <>
           <div className="selection-toolbar">
-            <span>{client.items.length} imóveis selecionados</span>
+            <span>
+              {client.items.length}{" "}
+              {client.items.length === 1
+                ? "imóvel selecionado"
+                : "imóveis selecionados"}
+            </span>
             <button
               className="button secondary"
               onClick={async () => {
@@ -123,7 +128,7 @@ export function SelectionPage() {
             </Link>
             {!client && (
               <button className="button secondary" onClick={openLogin}>
-                Recuperar minha seleção
+                Criar minha seleção
               </button>
             )}
           </div>
@@ -132,17 +137,10 @@ export function SelectionPage() {
       {client && (
         <div className="account-tools">
           <p>Seus dados e sua privacidade</p>
-          <button className="text-button" onClick={openLogin}>
-            Verificar telefone / acessar em outro dispositivo
-          </button>
           <button
             className="text-button"
             onClick={async () => {
               try {
-                if (!client.verified) {
-                  openLogin();
-                  return;
-                }
                 const blob = new Blob([JSON.stringify(client, null, 2)], {
                   type: "application/json",
                 });
@@ -176,7 +174,8 @@ export function SelectionPage() {
             <h2>Excluir seu cadastro?</h2>
             <p>
               Seu cadastro, solicitações e seleção serão excluídos
-              permanentemente. É necessário verificar seu telefone antes.
+              permanentemente neste cadastro. Esta ação exige a sessão
+              protegida deste navegador.
             </p>
             <button
               className="button danger"

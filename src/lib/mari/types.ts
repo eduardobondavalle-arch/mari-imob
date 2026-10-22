@@ -99,7 +99,6 @@ export type ClientState = {
   phone: string;
   items: Listing[];
   publicToken: string;
-  verified: boolean;
 } | null;
 export const purposes: Record<string, string> = {
   sale: "Comprar",

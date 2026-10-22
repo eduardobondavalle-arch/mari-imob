@@ -13,8 +13,6 @@ import {
   changePassword,
   logout,
   requireAdmin,
-  sendOtp,
-  verifyOtp,
 } from "@/lib/mari/auth";
 import {
   clientState,
@@ -331,10 +329,6 @@ async function handle(request: Request, context: Context) {
       result = await clientState();
     else if (path === "client/register" && method === "POST")
       result = await registerSelection(await readJson(request), request);
-    else if (path === "client/otp" && method === "POST")
-      result = await sendOtp(await readJson(request), request);
-    else if (path === "client/verify" && method === "POST")
-      result = await verifyOtp(await readJson(request), request);
     else if (path === "client/logout" && method === "POST") {
       await logout("client");
       result = { ok: true };

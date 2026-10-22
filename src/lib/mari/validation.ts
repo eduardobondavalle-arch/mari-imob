@@ -109,8 +109,7 @@ const imageUrl = z
       v === "" ||
       /^\/media\/[a-f0-9-]+\.webp$/.test(v) ||
       /^\/brand\/[a-z0-9-]+\.(?:png|webp)$/.test(v) ||
-      v === "/mari-portrait.png" ||
-      v === "/images/coast.png",
+      ["/mari-portrait.png", "/mari-portrait.webp", "/images/coast.png", "/images/coast.webp"].includes(v),
     "Use uma imagem enviada pelo painel.",
   );
 export const contentSchema = z.object({

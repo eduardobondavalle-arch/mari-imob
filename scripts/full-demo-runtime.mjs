@@ -41,7 +41,7 @@ export async function prepareFullDemo() {
     return {
       database,
       credentials,
-      env: { DATABASE_URL: databaseUrl, AUTH_SECRET: credentials.authSecret, APP_ENV: "demo", DEMO_MODE: "true", PRESENTATION_MODE: "false", OTP_PROVIDER: "development", STORAGE_PROVIDER: "local", UPLOAD_DIR: resolve(".data/presentation/uploads"), TRUST_PROXY: "true" },
+      env: { DATABASE_URL: databaseUrl, AUTH_SECRET: credentials.authSecret, APP_ENV: "demo", DEMO_MODE: "true", PRESENTATION_MODE: "false", STORAGE_PROVIDER: "local", UPLOAD_DIR: resolve(".data/presentation/uploads"), TRUST_PROXY: "true" },
     };
   } catch (error) { database?.kill(); throw error; }
 }

@@ -25,6 +25,7 @@ export function ConsultationWizard({ embedded = false }: { embedded?: boolean })
   const [done, setDone] = useState(false);
   const current = steps[step];
   const Shell = embedded ? "section" : "main";
+  const Heading = embedded ? "h2" : "h1";
   const shellProps = embedded ? { id: "consultoria" } : {};
   const shellClass = `consultation-shell${embedded ? " consultation-embedded" : ""}`;
 
@@ -45,6 +46,7 @@ export function ConsultationWizard({ embedded = false }: { embedded?: boolean })
         body: JSON.stringify({
           firstName: name,
           phone,
+          consent,
           answers: {
             objective: answers[0],
             regions: [answers[1]],
@@ -79,7 +81,7 @@ export function ConsultationWizard({ embedded = false }: { embedded?: boolean })
     <div className="consultation-card consultation-result">
       <span className="consultation-success-icon"><Check size={24} /></span>
       <span className="eyebrow">Consultoria recebida</span>
-      <h1>Agora conheço um pouco melhor o que você procura.</h1>
+      <Heading>Agora conheço um pouco melhor o que você procura.</Heading>
       <p>Vou analisar as possibilidades que combinam com o seu perfil e entrar em contato pelo WhatsApp.</p>
       {embedded ? <button className="button-primary" onClick={restart}>Fazer uma nova consultoria</button> : <Link className="button-primary" href="/">Voltar ao site</Link>}
     </div>
@@ -89,7 +91,7 @@ export function ConsultationWizard({ embedded = false }: { embedded?: boolean })
     <div className="consultation-card consultation-contact-card">
       <button className="back-link" onClick={() => setStep(steps.length - 1)}><ArrowLeft size={16} /> Voltar</button>
       <span className="eyebrow">Seu perfil</span>
-      <h1>Como posso falar com você?</h1>
+      <Heading>Como posso falar com você?</Heading>
       <p>Compartilhe seu primeiro nome e WhatsApp para receber um atendimento personalizado.</p>
       <label>Primeiro nome<input autoComplete="given-name" placeholder="Como você gosta de ser chamado?" value={name} onChange={(event) => setName(event.target.value)} /></label>
       <label>WhatsApp<input autoComplete="tel" inputMode="tel" placeholder="(47) 99999-9999" value={phone} onChange={(event) => setPhone(phoneMask(event.target.value))} /></label>
@@ -109,7 +111,7 @@ export function ConsultationWizard({ embedded = false }: { embedded?: boolean })
       <div>
         <button className="back-link" disabled={step === 0} onClick={() => setStep(Math.max(0, step - 1))}><ArrowLeft size={16} /> Voltar</button>
         <span className="eyebrow">{current[0]}</span>
-        <h1>{current[1]}</h1>
+        <Heading>{current[1]}</Heading>
         <p>Escolha a opção que mais se aproxima do que você procura.</p>
       </div>
       <div className="answer-list">{current[2].map((option, index) => <button key={option} className={answers[step] === option ? "answer selected" : "answer"} onClick={() => choose(option)}><small>{String(index + 1).padStart(2, "0")}</small><span>{option}</span><b aria-hidden="true">○</b></button>)}</div>

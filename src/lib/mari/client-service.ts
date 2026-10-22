@@ -29,7 +29,6 @@ export async function clientState() {
   return {
     firstName: auth.lead.firstName,
     phone: auth.lead.phone,
-    verified: Boolean(auth.lead.phoneVerifiedAt),
     publicToken: selection?.publicToken || "",
     items:
       selection?.items
@@ -42,8 +41,30 @@ export async function registerSelection(input: unknown, request: Request) {
   await rateLimit(`register:${requestIp(request)}`, 20);
   await rateLimit(`register-phone:${data.phone}`, 6);
   await available(data.propertyId);
+  const current = await session("client");
+  if (current?.lead) {
+    await db.$transaction(async (tx) => {
+      const selection = await ensureClientSelection(current.lead!.id, tx);
+      if (data.propertyId)
+        await tx.selectionItem.upsert({
+          where: {
+            selectionId_propertyId: {
+              selectionId: selection.id,
+              propertyId: data.propertyId,
+            },
+          },
+          update: {},
+          create: { selectionId: selection.id, propertyId: data.propertyId },
+        });
+      await tx.lead.update({
+        where: { id: current.lead!.id },
+        data: { lastActivityAt: new Date() },
+      });
+    });
+    return { ok: true };
+  }
   const existing = await db.lead.findUnique({ where: { phone: data.phone } });
-  if (existing) return { verificationRequired: true };
+  if (existing) return { recoveryRequired: true };
   const lead = await db.$transaction(async (tx) => {
     const created = await tx.lead.create({
       data: {
@@ -151,11 +172,6 @@ export async function contactRequest(input: unknown, request: Request) {
 }
 export async function deleteAccount() {
   const lead = await requireClient();
-  assert(
-    lead.phoneVerifiedAt,
-    403,
-    "Verifique seu telefone antes de excluir os dados.",
-  );
   await db.lead.delete({ where: { id: lead.id } });
   return { ok: true };
 }
