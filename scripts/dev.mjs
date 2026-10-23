@@ -13,7 +13,8 @@ async function run(script, args = []) {
   const [code] = await once(child, "exit");
   if (code !== 0) throw new Error(`Falha ao executar ${script} (código ${code}).`);
 }
-if (!existsSync(".env.local")) await run("scripts/setup-env.mjs");
+// Fill only missing local settings, including an explicit random seed password.
+await run("scripts/setup-env.mjs");
 config({ path: ".env.local", quiet: true });
 config({ quiet: true });
 const databaseUrl = process.env.DATABASE_URL || "postgresql://postgres:postgres@127.0.0.1:54329/postgres";

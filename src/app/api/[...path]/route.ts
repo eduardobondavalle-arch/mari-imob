@@ -17,10 +17,10 @@ import {
 import {
   clientState,
   registerSelection,
+  recoverSelection,
   changeSelection,
   contactRequest,
   sharedSelection,
-  deleteAccount,
 } from "@/lib/mari/client-service";
 import {
   adminProperties,
@@ -51,7 +51,7 @@ import {
   appointmentDetail,
   saveAppointment,
 } from "@/lib/mari/agenda-service";
-import { saveConsultation } from "@/lib/mari/consultation";
+import { consultationSchema, saveConsultation } from "@/lib/mari/consultation";
 import {
   saveOwnerSubmission,
   ownerSubmissions,
@@ -89,12 +89,9 @@ async function handle(request: Request, context: Context) {
     let result: unknown;
     if (path === "consultation" && method === "POST") {
       await rateLimit(`consultation:${requestIp(request)}`, 10);
-      result = await saveConsultation(await readJson(request));
-      return Response.json(result, { headers: { "Cache-Control": "private, no-store" } });
-    }
-    if (path === "owner-upload" && method === "POST") {
-      await rateLimit(`owner-upload:${requestIp(request)}`, 20);
-      result = await uploadMedia(request);
+      const data = consultationSchema.parse(await readJson(request));
+      await rateLimit(`consultation-phone:${data.phone}`, 6, 3600);
+      result = await saveConsultation(data);
       return Response.json(result, { headers: { "Cache-Control": "private, no-store" } });
     }
     if (path === "owner-submissions" && method === "POST") {
@@ -329,12 +326,11 @@ async function handle(request: Request, context: Context) {
       result = await clientState();
     else if (path === "client/register" && method === "POST")
       result = await registerSelection(await readJson(request), request);
+    else if (path === "client/recover" && method === "POST")
+      result = await recoverSelection(await readJson(request), request);
     else if (path === "client/logout" && method === "POST") {
       await logout("client");
       result = { ok: true };
-    } else if (path === "client/account" && method === "DELETE") {
-      result = await deleteAccount();
-      await logout("client");
     } else if (
       segments[0] === "selection" &&
       segments[1] &&

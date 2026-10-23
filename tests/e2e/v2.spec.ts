@@ -1,4 +1,5 @@
 ﻿import { test, expect } from "@playwright/test";
+import { adminCredentials } from "./admin-credentials";
 function todayInSaoPaulo() {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: "America/Sao_Paulo",
@@ -22,13 +23,14 @@ test("V2: filtros, Kanban, comentários, agenda e seleção compartilhada", asyn
   let leadId = "",
     stageId = "";
   const appointmentIds: string[] = [];
+  const admin = adminCredentials();
   await page.goto("/admin/login");
   await page
     .getByLabel("E-mail", { exact: true })
-    .fill(process.env.TEST_ADMIN_EMAIL || "mari@admin.com.br");
+    .fill(admin.email);
   await page
     .getByLabel("Senha", { exact: true })
-    .fill(process.env.TEST_ADMIN_PASSWORD || "Admin");
+    .fill(admin.password);
   await page.getByRole("button", { name: "Entrar no painel" }).click();
   await expect(page).toHaveURL(/\/admin$/);
   const initial = (

@@ -95,8 +95,6 @@ export type SiteContent = {
   professionalInfo: string;
 };
 export type ClientState = {
-  firstName: string;
-  phone: string;
   items: Listing[];
   publicToken: string;
 } | null;

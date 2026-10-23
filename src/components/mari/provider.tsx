@@ -11,7 +11,7 @@ import {
   type Listing,
   type SiteContent,
 } from "@/lib/mari/types";
-type Intent = { kind: "register" | "contact"; property?: Listing };
+type Intent = { kind: "register" | "contact" | "access"; property?: Listing };
 type ContextValue = {
   content: SiteContent;
   client: ClientState;
@@ -111,7 +111,7 @@ export function MariProvider({
         openLogin: () => {
           if (presentation) setPresentationNotice(true);
           else if (client) router.push("/minha-selecao");
-          else setIntent({ kind: "register" });
+          else setIntent({ kind: "access" });
         },
         contact: (property) => presentation ? setPresentationNotice(true) : setIntent({ kind: "contact", property }),
         logout: async () => {
@@ -175,12 +175,10 @@ function IdentityFlow({
   onClose: () => void;
   onComplete: () => Promise<void>;
 }) {
-  const { client } = useMari();
   const step = intent.kind;
-  const [firstName, setFirstName] = useState(client?.firstName || "");
-  const [phone, setPhone] = useState(phoneMask(client?.phone || ""));
+  const [firstName, setFirstName] = useState("");
+  const [phone, setPhone] = useState("");
   const [consent, setConsent] = useState(false);
-  const [recoveryRequired, setRecoveryRequired] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -190,7 +188,7 @@ function IdentityFlow({
       ? "Vamos conversar sobre seu próximo imóvel"
       : step === "register"
         ? "Seu próximo imóvel pode estar aqui!"
-        : "Que bom ter você por aqui";
+        : "Acesse sua seleção pelo telefone";
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -207,20 +205,19 @@ function IdentityFlow({
         setSuccess(true);
         return;
       }
+      if (step === "access") {
+        await api("client/recover", { phone: normalizePhone(phone) });
+        await onComplete();
+        onClose();
+        return;
+      }
       if (step === "register") {
-        const result = await api<{ recoveryRequired?: boolean }>(
-          "client/register",
-          {
-            firstName,
-            phone: normalizePhone(phone),
-            consent,
-            propertyId: intent.property?.id,
-          },
-        );
-        if (result.recoveryRequired) {
-          setRecoveryRequired(true);
-          return;
-        }
+        await api("client/register", {
+          firstName,
+          phone: normalizePhone(phone),
+          consent,
+          propertyId: intent.property?.id,
+        });
       }
       await onComplete();
       onClose();
@@ -255,12 +252,14 @@ function IdentityFlow({
             <p>
               {step === "register"
                 ? "Monte sua seleção para guardar suas opções favoritas, comparar imóveis e compartilhar com quem quiser."
+                : step === "access"
+                  ? "Informe o telefone usado para recuperar sua seleção neste dispositivo. O acesso mostra somente imóveis públicos do catálogo."
                 : intent.property
                     ? `Seu interesse em ${intent.property.title} será registrado para atendimento.`
                     : "Conte o que você procura. A Mari poderá entrar em contato com você."}
             </p>
             <form className="stack" onSubmit={submit}>
-              <label>
+              {step !== "access" && <label>
                   Primeiro nome
                   <input
                     value={firstName}
@@ -270,7 +269,7 @@ function IdentityFlow({
                     maxLength={60}
                     autoComplete="given-name"
                   />
-              </label>
+              </label>}
               <label>
                 Telefone com WhatsApp
                 <input
@@ -293,7 +292,7 @@ function IdentityFlow({
                   />
                 </label>
               )}
-              <label className="check-line">
+              {step !== "access" && <label className="check-line">
                   <input
                     type="checkbox"
                     checked={consent}
@@ -311,26 +310,23 @@ function IdentityFlow({
                       : "manter minha seleção e entrar em contato sobre os imóveis"}
                     .
                   </span>
-              </label>
+              </label>}
               <Notice error>{error}</Notice>
-              {recoveryRequired && (
-                <Notice>
-                  Este telefone já possui um cadastro. Por segurança, os dados
-                  e imóveis salvos não são liberados apenas com o número.
-                  Fale com a Mari para recuperar o acesso.
-                </Notice>
-              )}
               <button className="button full" disabled={busy}>
                 {busy
                   ? "Aguarde…"
                   : step === "register"
                     ? "Criar minha seleção"
-                    : "Confirmar solicitação"}
+                    : step === "access"
+                      ? "Acessar minha seleção"
+                      : "Confirmar solicitação"}
                 <ArrowRight size={18} />
               </button>
             </form>
             <p className="privacy-note">
-              <ShieldCheck size={15} /> Seus dados ficam protegidos.
+              <ShieldCheck size={15} /> {step === "access"
+                ? "O telefone identifica uma seleção de conveniência; ele não verifica identidade nem libera dados do atendimento."
+                : "Seus dados ficam protegidos."}
             </p>
             <Link
               className="admin-access"

@@ -5,19 +5,9 @@ import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { hashPassword } from "../src/lib/mari/crypto";
 import { defaultContent } from "../src/lib/mari/defaults";
-const production =
-  process.env.VERCEL_ENV !== undefined
-    ? process.env.VERCEL_ENV === "production"
-    : process.env.APP_ENV === "production";
-if (
-  production &&
-  (!process.env.INITIAL_ADMIN_PASSWORD ||
-    process.env.INITIAL_ADMIN_PASSWORD === "Admin" ||
-    process.env.INITIAL_ADMIN_PASSWORD.length < 12)
-)
-  throw new Error(
-    "Defina uma senha administrativa forte antes da inicialização em produção.",
-  );
+import { initialAdminCredentials } from "../src/lib/mari/initial-admin";
+// Validate credentials before Prisma can connect to or mutate any database.
+const initialAdmin = initialAdminCredentials();
 const db = new PrismaClient({
   adapter: new PrismaPg({
     connectionString:
@@ -28,13 +18,11 @@ const db = new PrismaClient({
 });
 async function main() {
   await db.admin.upsert({
-    where: { email: process.env.INITIAL_ADMIN_EMAIL || "mari@admin.com.br" },
+    where: { email: initialAdmin.email },
     update: {},
     create: {
-      email: process.env.INITIAL_ADMIN_EMAIL || "mari@admin.com.br",
-      passwordHash: await hashPassword(
-        process.env.INITIAL_ADMIN_PASSWORD || "Admin",
-      ),
+      email: initialAdmin.email,
+      passwordHash: await hashPassword(initialAdmin.password),
       mustChangePassword: true,
     },
   });

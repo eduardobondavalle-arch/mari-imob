@@ -13,23 +13,33 @@ import { isProductionDeployment } from "@/config/deployment";
 export const production = isProductionDeployment;
 const INVALID_PASSWORD_HASH =
   "00000000000000000000000000000000:531358f1e5f2238ab188f7bb65c108d408eefe9a6e59e7814d08b6a1fc4ce241b822aea01732d975dcb80ac143bdfcbfa43d279717da756274bfb09dc72d4f4d";
-export async function session(role: "admin" | "client") {
+async function sessionToken(role: "admin" | "client") {
   const value = (await cookies()).get(`mari_${role}`)?.value;
   if (!value) return null;
+  return digest(value);
+}
+export async function adminSession() {
+  const tokenHash = await sessionToken("admin");
+  if (!tokenHash) return null;
   const row = await db.session.findUnique({
-    where: { tokenHash: digest(value) },
-    include: { admin: true, lead: true },
+    where: { tokenHash },
+    include: { admin: true },
   });
-  if (
-    !row ||
-    row.expiresAt < new Date() ||
-    (role === "admin" ? !row.adminId : !row.leadId)
-  )
-    return null;
+  if (!row || row.expiresAt < new Date() || !row.adminId) return null;
   return row;
 }
+export async function selectionSession() {
+  const tokenHash = await sessionToken("client");
+  if (!tokenHash) return null;
+  const row = await db.session.findUnique({
+    where: { tokenHash },
+    select: { leadId: true, expiresAt: true },
+  });
+  if (!row || row.expiresAt < new Date() || !row.leadId) return null;
+  return { leadId: row.leadId };
+}
 export async function requireAdmin(allowPasswordChange = false) {
-  const row = await session("admin");
+  const row = await adminSession();
   assert(row?.admin, 401, "Entre na administração para continuar.");
   assert(
     allowPasswordChange || !row.admin.mustChangePassword || !production(),
@@ -38,10 +48,10 @@ export async function requireAdmin(allowPasswordChange = false) {
   );
   return row.admin;
 }
-export async function requireClient() {
-  const row = await session("client");
-  assert(row?.lead, 401, "Acesse sua seleção para continuar.");
-  return row.lead;
+export async function requireSelectionAccess() {
+  const row = await selectionSession();
+  assert(row?.leadId, 401, "Acesse sua seleção para continuar.");
+  return { leadId: row.leadId };
 }
 export async function createSession(role: "admin" | "client", id: string) {
   const raw = token();
@@ -82,13 +92,16 @@ export async function adminLogin(input: unknown, request: Request) {
     })
     .parse(input);
   await rateLimit(`admin-ip:${requestIp(request)}`, 30);
-  await rateLimit(`admin:${data.email.toLowerCase()}`, 8);
   const admin = await db.admin.findUnique({
     where: { email: data.email.toLowerCase() },
   });
   // Exactly one scrypt verification for both known and unknown accounts.
   const hash = admin?.passwordHash || INVALID_PASSWORD_HASH;
   const valid = await verifyPassword(data.password, hash);
+  // Account buckets record only failed credentials. A third party cannot lock
+  // the legitimate administrator out merely by knowing the email address.
+  if (!admin || !valid)
+    await rateLimit(`admin:${data.email.toLowerCase()}`, 8);
   assert(admin && valid, 401, "E-mail ou senha incorretos.");
   await createSession("admin", admin.id);
   return { ok: true, mustChangePassword: admin.mustChangePassword };

@@ -1,18 +1,26 @@
 import { readFile } from "node:fs/promises";
 import { scryptSync, timingSafeEqual, createHash } from "node:crypto";
 import pg from "pg";
+import { config } from "dotenv";
 
+config({ path: ".env.local", quiet: true });
 const state = JSON.parse(await readFile(".cache/share-preview.json", "utf8"));
 const credentials = JSON.parse(await readFile(".data/presentation/credentials.json", "utf8"));
-for (const [name, port, password] of [["local", 54329, "Admin"], ["demo", 54330, credentials.password]]) {
+const localCredentials = {
+  email: process.env.INITIAL_ADMIN_EMAIL || "mari@admin.com.br",
+  password: process.env.INITIAL_ADMIN_PASSWORD,
+};
+if (!localCredentials.password)
+  throw new Error("Defina INITIAL_ADMIN_PASSWORD em .env.local para diagnosticar o login local.");
+for (const [name, port, account] of [["local", 54329, localCredentials], ["demo", 54330, credentials]]) {
   const db = new pg.Client({ connectionString: `postgresql://postgres:postgres@127.0.0.1:${port}/postgres`, connectionTimeoutMillis: 3000 });
   try {
     await db.connect();
-    const { rows } = await db.query('SELECT "passwordHash", "mustChangePassword" FROM "Admin" WHERE email = $1', [credentials.email]);
+    const { rows } = await db.query('SELECT "passwordHash", "mustChangePassword" FROM "Admin" WHERE email = $1', [account.email]);
     const [salt, hash] = (rows[0]?.passwordHash || "").split(":");
-    const valid = salt && hash ? timingSafeEqual(scryptSync(password, salt, 64), Buffer.from(hash, "hex")) : false;
+    const valid = salt && hash ? timingSafeEqual(scryptSync(account.password, salt, 64), Buffer.from(hash, "hex")) : false;
     const bucket = Math.floor(Date.now() / 900000);
-    const key = createHash("sha256").update(`admin:${credentials.email}:${bucket}`).digest("hex");
+    const key = createHash("sha256").update(`admin:${account.email}:${bucket}`).digest("hex");
     const rate = await db.query('SELECT count FROM "RateLimit" WHERE key = $1', [key]);
     console.log(JSON.stringify({ database: name, adminExists: Boolean(rows[0]), passwordMatches: valid, attemptsThisWindow: rate.rows[0]?.count || 0 }));
   } catch (error) { console.log(JSON.stringify({ database: name, error: error.message })); }
@@ -20,12 +28,12 @@ for (const [name, port, password] of [["local", 54329, "Admin"], ["demo", 54330,
 }
 
 const cases = process.argv.includes("--external")
-  ? [["external", state.url, state.url, credentials.password, true]]
-  : [["demo-gateway", "http://127.0.0.1:3001", state.url, credentials.password, true], ["local-127", "http://127.0.0.1:3000", "http://127.0.0.1:3000", "Admin", false], ["local-hostname", "http://localhost:3000", "http://localhost:3000", "Admin", false]];
-for (const [name, base, origin, password, gateway] of cases) {
+  ? [["external", state.url, state.url, credentials, true]]
+  : [["demo-gateway", "http://127.0.0.1:3001", state.url, credentials, true], ["local-127", "http://127.0.0.1:3000", "http://127.0.0.1:3000", localCredentials, false], ["local-hostname", "http://localhost:3000", "http://localhost:3000", localCredentials, false]];
+for (const [name, base, origin, account, gateway] of cases) {
   try {
     const headers = { "Content-Type": "application/json", Origin: origin, ...(gateway ? { Authorization: `Basic ${Buffer.from(`${credentials.email}:${credentials.password}`).toString("base64")}` } : {}) };
-    const response = await fetch(`${base}/api/admin/login`, { method: "POST", headers, body: JSON.stringify({ email: credentials.email, password }), signal: AbortSignal.timeout(15000) });
+    const response = await fetch(`${base}/api/admin/login`, { method: "POST", headers, body: JSON.stringify(account), signal: AbortSignal.timeout(15000) });
     const contentType = response.headers.get("content-type");
     const body = await response.text();
     const cookie = response.headers.getSetCookie().map(value => value.split(";")[0]).join("; ");

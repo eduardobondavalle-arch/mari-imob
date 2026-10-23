@@ -4,13 +4,11 @@ import Link from "next/link";
 import { Heart, Copy, ArrowRight, LogOut } from "lucide-react";
 import { useMari } from "./provider";
 import { SelectionPresentation } from "./selection-presentation";
-import { Busy, Notice, api, Modal } from "./ui";
+import { Busy, Notice } from "./ui";
 import { priceLabel } from "@/lib/mari/types";
 export function SelectionPage() {
   const { client, ready, openLogin, logout } = useMari();
   const [message, setMessage] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [error, setError] = useState("");
   if (!ready)
     return (
       <div className="container section">
@@ -27,7 +25,7 @@ export function SelectionPage() {
           </h1>
           <p>
             {client
-              ? `${client.firstName}, aqui estão os lugares que chamaram a sua atenção.`
+              ? "Aqui estão os lugares que chamaram a sua atenção."
               : "Guarde suas escolhas e compartilhe novas possibilidades."}
           </p>
         </div>
@@ -67,7 +65,6 @@ export function SelectionPage() {
           <SelectionPresentation
             items={client.items}
             title="Seus próximos endereços"
-            recipientName={client.firstName}
           />
           {client.items.length > 1 && (
             <div className="comparison">
@@ -136,64 +133,16 @@ export function SelectionPage() {
       )}
       {client && (
         <div className="account-tools">
-          <p>Seus dados e sua privacidade</p>
-          <button
-            className="text-button"
-            onClick={async () => {
-              try {
-                const blob = new Blob([JSON.stringify(client, null, 2)], {
-                  type: "application/json",
-                });
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = "minha-selecao-mari.json";
-                link.click();
-                URL.revokeObjectURL(link.href);
-              } catch {
-                setError("Não foi possível exportar.");
-              }
-            }}
-          >
-            Exportar meus dados
-          </button>
-          <button
-            className="text-button danger-text"
-            onClick={() => setConfirmDelete(true)}
-          >
-            Excluir meu cadastro
-          </button>
-          <Notice error>{error}</Notice>
+          <p>Privacidade da seleção</p>
+          <small>
+            Esta é uma seleção de conveniência. O telefone recupera somente
+            imóveis públicos e não confirma identidade nem libera dados do CRM,
+            atendimentos ou informações administrativas.
+          </small>
+          <Link className="text-button" href="/privacidade">
+            Saiba como seus dados são tratados
+          </Link>
         </div>
-      )}
-      {confirmDelete && (
-        <Modal
-          title="Excluir meus dados"
-          onClose={() => setConfirmDelete(false)}
-        >
-          <div className="modal-content">
-            <h2>Excluir seu cadastro?</h2>
-            <p>
-              Seu cadastro, solicitações e seleção serão excluídos
-              permanentemente neste cadastro. Esta ação exige a sessão
-              protegida deste navegador.
-            </p>
-            <button
-              className="button danger"
-              onClick={async () => {
-                try {
-                  await api("client/account", {}, "DELETE");
-                  await logout();
-                  setConfirmDelete(false);
-                } catch (err) {
-                  setError((err as Error).message);
-                  setConfirmDelete(false);
-                }
-              }}
-            >
-              Excluir meus dados
-            </button>
-          </div>
-        </Modal>
       )}
     </div>
   );

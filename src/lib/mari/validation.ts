@@ -26,6 +26,56 @@ export const identitySchema = z.object({
   consent: z.literal(true),
   propertyId: z.string().max(100).optional(),
 });
+const httpsUrlSchema = z
+  .string()
+  .max(300)
+  .refine((value) => {
+    try {
+      const url = new URL(value);
+      return url.protocol === "https:" && Boolean(url.hostname);
+    } catch {
+      return false;
+    }
+  }, "Utilize um endereço HTTPS.");
+export const optionalHttpsUrlSchema = z.union([
+  z.literal(""),
+  httpsUrlSchema,
+]);
+export const internalOrHttpsUrlSchema = z
+  .string()
+  .min(1)
+  .max(300)
+  .refine(
+    (value) =>
+      (/^\/(?!\/)[^\u0000-\u001f\u007f\\]*$/.test(value) &&
+        !value.includes("\\")) ||
+      httpsUrlSchema.safeParse(value).success,
+    "Utilize um caminho interno ou endereço HTTPS.",
+  );
+export function safeHttpsUrl(value: unknown) {
+  const parsed = optionalHttpsUrlSchema.safeParse(value);
+  return parsed.success ? parsed.data : "";
+}
+export function safeInternalOrHttpsUrl(value: unknown, fallback: string) {
+  const parsed = internalOrHttpsUrlSchema.safeParse(value);
+  return parsed.success ? parsed.data : fallback;
+}
+export const ownerSubmissionSchema = z
+  .object({
+    firstName: z.string().trim().min(2).max(80),
+    phone: phoneSchema,
+    purpose: z.enum(["sale", "rent"]),
+    propertyType: z.string().trim().min(2).max(60),
+    city: z.string().trim().min(2).max(100),
+    neighborhood: z.string().trim().min(2).max(100),
+    location: z.string().trim().max(250).default(""),
+    area: z.number().min(0).max(1000000).nullable(),
+    bedrooms: z.number().int().min(0).max(100).nullable(),
+    askingPrice: z.number().min(0).max(999999999999).nullable(),
+    notes: z.string().trim().max(5000).default(""),
+    consent: z.literal(true),
+  })
+  .strict();
 const optionalNumber = z.number().finite().min(0).max(1000000).nullable();
 export const propertySchema = z.object({
   title: z.string().trim().min(5).max(180),
@@ -127,20 +177,17 @@ export const contentSchema = z.object({
   aboutText: z.string().max(5000),
   aboutImage: imageUrl,
   aboutButtonText: z.string().min(1).max(80),
-  aboutButtonUrl: z.string().min(1).max(300),
+  aboutButtonUrl: internalOrHttpsUrlSchema,
   contactTitle: z.string().min(1).max(200),
   footerText: z.string().max(1000),
   whatsapp: z.string().regex(/^55[1-9]\d\d{8,9}$/, "Informe DDI, DDD e telefone, somente números."),
   whatsappPhoto: imageUrl,
   whatsappMessage: z.string().max(500),
   whatsappEnabled: z.boolean(),
-  instagram: z.union([
-    z.literal(""),
-    z.url().refine((v) => new URL(v).protocol === "https:"),
-  ]),
-  facebook: z.union([z.literal(""), z.string().url().max(300)]),
-  youtube: z.union([z.literal(""), z.string().url().max(300)]),
-  linkedin: z.union([z.literal(""), z.string().url().max(300)]),
+  instagram: optionalHttpsUrlSchema,
+  facebook: optionalHttpsUrlSchema,
+  youtube: optionalHttpsUrlSchema,
+  linkedin: optionalHttpsUrlSchema,
   creci: z.string().max(100),
   professionalInfo: z.string().max(500),
 });

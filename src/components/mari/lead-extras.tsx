@@ -22,6 +22,7 @@ type Comment = {
 type Consultation = {
   id: string;
   answers: Record<string, string | string[]>;
+  identityVerified: boolean;
   completedAt: string;
 };
 type Movement = {
@@ -76,10 +77,10 @@ export function LeadExtras({
       <Notice error>{error}</Notice>
       {data.consultations.length > 0 && (
         <section className="lead-profile">
-          <p className="eyebrow">PERFIL DE BUSCA QUALIFICADO</p>
+          <p className="eyebrow">PERFIL DE BUSCA ENVIADO PELO SITE</p>
           <h3>Consultoria personalizada · {data.consultations.length} preenchimento(s)</h3>
           {data.consultations.map((consultation, index) => <details className="profile-version" key={consultation.id} open={index === 0}>
-            <summary>{index === 0 ? "Perfil mais recente" : "Perfil anterior"} · {formatAppointment(consultation.completedAt)}</summary>
+            <summary>{index === 0 ? "Perfil mais recente" : "Perfil anterior"} · {formatAppointment(consultation.completedAt)} · {consultation.identityVerified ? "identidade verificada" : "identidade não verificada"}</summary>
             <div className="profile-answers">
               {Object.entries(consultation.answers)
                 .filter(([key, value]) => key !== "otherBudget" || value)
