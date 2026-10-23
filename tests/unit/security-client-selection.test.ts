@@ -6,6 +6,13 @@ const mocks = vi.hoisted(() => ({
   rateLimit: vi.fn(),
   findLead: vi.fn(),
   findSelection: vi.fn(),
+  upsertLead: vi.fn(),
+  updateLead: vi.fn(),
+  createContact: vi.fn(),
+  requireSelectionAccess: vi.fn(),
+  ensureClientSelection: vi.fn(),
+  upsertSelectionItem: vi.fn(),
+  deleteSelectionItems: vi.fn(),
   listingDto: vi.fn((property: Record<string, unknown>) => ({
     id: property.id,
     title: property.title,
@@ -16,14 +23,27 @@ const mocks = vi.hoisted(() => ({
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/mari/db", () => ({
   db: {
-    lead: { findUnique: mocks.findLead },
+    lead: {
+      findUnique: mocks.findLead,
+      upsert: mocks.upsertLead,
+      update: mocks.updateLead,
+    },
     selection: { findUnique: mocks.findSelection },
+    contactRequest: { create: mocks.createContact },
+    $transaction: async (operation: (tx: unknown) => unknown) =>
+      operation({
+        lead: { update: mocks.updateLead },
+        selectionItem: {
+          upsert: mocks.upsertSelectionItem,
+          deleteMany: mocks.deleteSelectionItems,
+        },
+      }),
   },
 }));
 vi.mock("@/lib/mari/auth", () => ({
   selectionSession: mocks.selectionSession,
   createSession: mocks.createSession,
-  requireSelectionAccess: vi.fn(),
+  requireSelectionAccess: mocks.requireSelectionAccess,
 }));
 vi.mock("@/lib/mari/http", () => ({
   requestIp: () => "203.0.113.7",
@@ -37,11 +57,14 @@ vi.mock("@/lib/mari/catalog", () => ({
   listingDto: mocks.listingDto,
 }));
 vi.mock("@/lib/mari/client-selection", () => ({
-  ensureClientSelection: vi.fn(),
+  ensureClientSelection: mocks.ensureClientSelection,
 }));
 
 import {
   clientState,
+  changeSelection,
+  contactRequest,
+  registerSelection,
   recoverSelection,
   sharedSelection,
 } from "@/lib/mari/client-service";
@@ -50,6 +73,8 @@ describe("seleção pública recuperada por telefone", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.createSession.mockResolvedValue(undefined);
+    mocks.ensureClientSelection.mockResolvedValue({ id: "selection-1" });
+    mocks.requireSelectionAccess.mockResolvedValue({ leadId: "lead-1" });
   });
 
   it("retorna somente token e imóveis públicos, sem dados do lead", async () => {
@@ -135,5 +160,54 @@ describe("seleção pública recuperada por telefone", () => {
         },
       ],
     });
+  });
+
+  it("não altera a atividade comercial ao adicionar ou remover imóveis", async () => {
+    await changeSelection("property-1", true);
+
+    expect(mocks.deleteSelectionItems).toHaveBeenCalledWith({
+      where: { selectionId: "selection-1", propertyId: "property-1" },
+    });
+    expect(mocks.updateLead).not.toHaveBeenCalled();
+  });
+
+  it("não altera a atividade comercial ao reutilizar uma sessão no cadastro da seleção", async () => {
+    mocks.selectionSession.mockResolvedValue({ leadId: "lead-1" });
+
+    await registerSelection(
+      { firstName: "Maria", phone: "(47) 99999-1234", consent: true },
+      new Request("https://mari.example/api/client/register"),
+    );
+
+    expect(mocks.updateLead).not.toHaveBeenCalled();
+  });
+
+  it("registra contato público sem modificar atributos confiáveis do lead", async () => {
+    mocks.upsertLead.mockResolvedValue({ id: "lead-existing" });
+
+    await contactRequest(
+      {
+        firstName: "Pessoa não verificada",
+        phone: "(47) 99999-1234",
+        consent: true,
+        message: "Quero mais informações.",
+      },
+      new Request("https://mari.example/api/contact"),
+    );
+
+    expect(mocks.upsertLead).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { phone: "5547999991234" },
+        update: {},
+      }),
+    );
+    expect(mocks.createContact).toHaveBeenCalledWith({
+      data: {
+        leadId: "lead-existing",
+        propertyId: undefined,
+        message: "Quero mais informações.",
+      },
+    });
+    expect(mocks.updateLead).not.toHaveBeenCalled();
   });
 });

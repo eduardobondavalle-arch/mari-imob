@@ -54,10 +54,6 @@ export async function registerSelection(input: unknown, request: Request) {
           update: {},
           create: { selectionId: selection.id, propertyId: data.propertyId },
         });
-      await tx.lead.update({
-        where: { id: current.leadId! },
-        data: { lastActivityAt: new Date() },
-      });
     });
     return { ok: true };
   }
@@ -128,10 +124,6 @@ export async function changeSelection(id: string, remove = false) {
         update: {},
         create: { selectionId: selection.id, propertyId: id },
       });
-    await tx.lead.update({
-      where: { id: access.leadId },
-      data: { lastActivityAt: new Date() },
-    });
   });
   return { ok: true };
 }
@@ -173,7 +165,7 @@ export async function contactRequest(input: unknown, request: Request) {
   await rateLimit(`contact-phone:${identity.phone}`, 8);
   const lead = await db.lead.upsert({
     where: { phone: identity.phone },
-    update: { lastActivityAt: new Date() },
+    update: {},
     create: {
       firstName: identity.firstName,
       phone: identity.phone,
@@ -182,18 +174,12 @@ export async function contactRequest(input: unknown, request: Request) {
     },
   });
   await ensureClientSelection(lead.id);
-  await db.$transaction([
-    db.contactRequest.create({
-      data: {
-        leadId: lead.id,
-        propertyId: data.propertyId,
-        message: data.message,
-      },
-    }),
-    db.lead.update({
-      where: { id: lead.id },
-      data: { lastActivityAt: new Date() },
-    }),
-  ]);
+  await db.contactRequest.create({
+    data: {
+      leadId: lead.id,
+      propertyId: data.propertyId,
+      message: data.message,
+    },
+  });
   return { ok: true };
 }
