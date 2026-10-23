@@ -1,5 +1,10 @@
 import assert from "node:assert/strict";
+import { config } from "dotenv";
+config({ path: ".env.local", quiet: true });
 const base = process.env.TEST_BASE_URL || "http://127.0.0.1:3000";
+const adminEmail = process.env.TEST_ADMIN_EMAIL || process.env.INITIAL_ADMIN_EMAIL || "mari@admin.com.br";
+const adminPassword = process.env.TEST_ADMIN_PASSWORD || process.env.INITIAL_ADMIN_PASSWORD;
+if (!adminPassword) throw new Error("Defina TEST_ADMIN_PASSWORD ou INITIAL_ADMIN_PASSWORD para a verificação V2.");
 let cookie = "";
 const cleanup = [], report = [];
 async function request(path, data, method = data === undefined ? "GET" : "POST", anonymous = false) {
@@ -10,7 +15,7 @@ async function request(path, data, method = data === undefined ? "GET" : "POST",
 async function ok(path, data, method) { const r = await request(path,data,method); assert.equal(r.status,200,`${path}: ${JSON.stringify(r.body)}`); return r.body; }
 const unique = `v2-${Date.now()}`;
 try {
-  const login = await request("admin/login",{email:process.env.TEST_ADMIN_EMAIL||"mari@admin.com.br",password:process.env.TEST_ADMIN_PASSWORD||"Admin"});
+  const login = await request("admin/login",{email:adminEmail,password:adminPassword});
   assert.equal(login.status,200); cookie = login.response.headers.getSetCookie().map(s=>s.split(";")[0]).join("; ");
   const original = await ok("admin/board");
   const initial = original.find(s=>s.isDefault); assert(initial);

@@ -1,30 +1,17 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { z } from "zod";
 import { db } from "./db";
 import { assert } from "./http";
-import { phoneSchema } from "./validation";
-
-const schema = z.object({
-  firstName: z.string().trim().min(2).max(80), phone: phoneSchema,
-  purpose: z.enum(["sale", "rent"]), propertyType: z.string().trim().min(2).max(60),
-  city: z.string().trim().min(2).max(100), neighborhood: z.string().trim().min(2).max(100),
-  location: z.string().trim().max(250).default(""), area: z.number().min(0).max(1000000).nullable(),
-  bedrooms: z.number().int().min(0).max(100).nullable(), askingPrice: z.number().min(0).max(999999999999).nullable(),
-  notes: z.string().trim().max(5000).default(""), photoIds: z.array(z.string()).max(12).default([]), consent: z.literal(true),
-});
+import { ownerSubmissionSchema } from "./validation";
 
 export async function saveOwnerSubmission(input: unknown) {
-  const data = schema.parse(input);
+  const data = ownerSubmissionSchema.parse(input);
   return db.$transaction(async (tx) => {
     const stage = await tx.leadStage.findFirstOrThrow({ where: { isDefault: true } });
     const lead = await tx.lead.upsert({ where: { phone: data.phone }, create: { firstName: data.firstName, phone: data.phone, source: "Captação de proprietário", consentAt: new Date(), stageId: stage.id, position: await tx.lead.count({ where: { stageId: stage.id } }) }, update: { lastActivityAt: new Date() } });
-    const photos = await tx.media.findMany({ where: { id: { in: data.photoIds }, propertyId: null, ownerSubmissionId: null } });
-    assert(photos.length === data.photoIds.length, 400, "Uma fotografia não está disponível.");
-    const { photoIds, firstName: _name, phone: _phone, consent: _consent, ...fields } = data;
+    const { firstName: _name, phone: _phone, consent: _consent, ...fields } = data;
     void _name; void _phone; void _consent;
     const row = await tx.ownerSubmission.create({ data: { ...fields, leadId: lead.id } });
-    if (photoIds.length) await tx.media.updateMany({ where: { id: { in: photoIds } }, data: { ownerSubmissionId: row.id } });
     return { ok: true, id: row.id };
   });
 }

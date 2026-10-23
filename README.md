@@ -22,9 +22,9 @@ npm.cmd run dev:web
 
 Site: **http://127.0.0.1:3000**. Administração: **http://127.0.0.1:3000/admin**.
 
-Credenciais iniciais **somente de desenvolvimento**: `mari@admin.com.br` / `Admin`. Troque a senha em **Configurações → Segurança do acesso**. O seed não redefine uma senha já alterada. A senha fica armazenada com hash e não é incluída no frontend.
+O e-mail e a senha iniciais de desenvolvimento são gerados em `.env.local` por `setup:env`; consulte `INITIAL_ADMIN_EMAIL` e `INITIAL_ADMIN_PASSWORD` nesse arquivo privado. A senha é aleatória, tem pelo menos 12 caracteres e deve ser trocada em **Configurações → Segurança do acesso**. O seed não redefine uma senha já alterada. A senha fica armazenada com hash e não é incluída no frontend.
 
-Dados e uploads locais ficam em `.data/` e sobrevivem ao reinício. Preserve essa pasta. `.env.local` e dados privados não devem ser versionados. `setup:env` gera segredo aleatório e preserva variáveis existentes. Se copiou `.env.example` manualmente, substitua o valor ilustrativo de `AUTH_SECRET` por um segredo aleatório.
+Dados e uploads locais ficam em `.data/` e sobrevivem ao reinício. Preserve essa pasta. `.env.local` e dados privados não devem ser versionados. `setup:env` gera segredo e senha inicial aleatórios e preserva variáveis existentes. Se copiou `.env.example` manualmente, defina `AUTH_SECRET` e uma `INITIAL_ADMIN_PASSWORD` forte antes do seed.
 
 ## Fluxo de uso
 

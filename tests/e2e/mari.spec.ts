@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { resolve } from "node:path";
+import { adminCredentials } from "./admin-credentials";
 test("páginas públicas, navegação e acessibilidade", async ({ page }, info) => {
   const errors: string[] = []; page.on("pageerror", e => errors.push(e.message));
   for (const path of ["/", "/buscar", "/contato", "/minha-selecao", "/privacidade", "/admin/login"]) {
@@ -27,9 +28,10 @@ test("jornada real: cadastro sem SMS, fotos, filtros, seleção, CRM e editor", 
   let initialContent: Record<string, unknown> | null = null;
   const visitor = await browser.newContext({ viewport: info.project.use.viewport, extraHTTPHeaders: headers, httpCredentials: info.project.use.httpCredentials });
   const guest = await visitor.newPage();
+  const admin = adminCredentials();
   await page.goto("/admin/login");
-  await page.getByLabel("E-mail", { exact: true }).fill(process.env.TEST_ADMIN_EMAIL || "mari@admin.com.br");
-  await page.getByLabel("Senha", { exact: true }).fill(process.env.TEST_ADMIN_PASSWORD || "Admin");
+  await page.getByLabel("E-mail", { exact: true }).fill(admin.email);
+  await page.getByLabel("Senha", { exact: true }).fill(admin.password);
   await page.getByRole("button", { name: "Entrar no painel" }).click();
   await expect(page).toHaveURL(/\/admin$/);
   try {

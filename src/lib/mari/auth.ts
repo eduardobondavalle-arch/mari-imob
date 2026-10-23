@@ -82,13 +82,16 @@ export async function adminLogin(input: unknown, request: Request) {
     })
     .parse(input);
   await rateLimit(`admin-ip:${requestIp(request)}`, 30);
-  await rateLimit(`admin:${data.email.toLowerCase()}`, 8);
   const admin = await db.admin.findUnique({
     where: { email: data.email.toLowerCase() },
   });
   // Exactly one scrypt verification for both known and unknown accounts.
   const hash = admin?.passwordHash || INVALID_PASSWORD_HASH;
   const valid = await verifyPassword(data.password, hash);
+  // Account buckets record only failed credentials. A third party cannot lock
+  // the legitimate administrator out merely by knowing the email address.
+  if (!admin || !valid)
+    await rateLimit(`admin:${data.email.toLowerCase()}`, 8);
   assert(admin && valid, 401, "E-mail ou senha incorretos.");
   await createSession("admin", admin.id);
   return { ok: true, mustChangePassword: admin.mustChangePassword };

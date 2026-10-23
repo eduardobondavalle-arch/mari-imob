@@ -51,6 +51,7 @@ model Consultation {
   id               String   @id @default(cuid())
   leadId           String
   answers          Json
+  identityVerified Boolean  @default(false)
   completedAt      DateTime @default(now())
   lead             Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   @@index([leadId, completedAt])

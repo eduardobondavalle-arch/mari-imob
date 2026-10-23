@@ -5,6 +5,7 @@ import { db } from "./db";
 import type { Field, Listing, SiteContent } from "./types";
 import { catalogWhere } from "./search-filters";
 import { defaultContent } from "./defaults";
+import { safeHttpsUrl, safeInternalOrHttpsUrl } from "./validation";
 export const listingInclude = {
   images: { orderBy: { position: "asc" as const } },
   tags: true,
@@ -72,9 +73,20 @@ export function listingDto(row: DbListing, admin = false): Listing {
 }
 export const getContent = cache(async function getContent() {
   const settings = await db.siteSettings.findUnique({ where: { id: "main" } });
-  return {
+  const content = {
     ...defaultContent,
     ...((settings?.published as Partial<SiteContent>) || {}),
+  };
+  return {
+    ...content,
+    aboutButtonUrl: safeInternalOrHttpsUrl(
+      content.aboutButtonUrl,
+      defaultContent.aboutButtonUrl,
+    ),
+    instagram: safeHttpsUrl(content.instagram),
+    facebook: safeHttpsUrl(content.facebook),
+    youtube: safeHttpsUrl(content.youtube),
+    linkedin: safeHttpsUrl(content.linkedin),
   };
 });
 export async function publicFields() {
