@@ -1,3 +1,62 @@
 import Link from "next/link";
+
 export const metadata = { title: "Privacidade e seus dados" };
-export default function Page() { return <article className="container legal section"><p className="eyebrow">PRIVACIDADE</p><h1>Seus dados, suas escolhas.</h1><p>Este site utiliza primeiro nome, telefone, imóveis selecionados e solicitações de contato para manter sua seleção e permitir atendimento pela Mari Corretora de Imóveis.</p><h2>Como os dados são usados</h2><p>A seleção fica protegida por uma sessão exclusiva do navegador em que o cadastro foi criado. O telefone identifica o atendimento no CRM, mas não funciona como senha e não libera dados em outro dispositivo. A recuperação de acesso exige atendimento seguro pela Mari.</p><h2>Links compartilhados</h2><p>O link da sua seleção exibe apenas os imóveis disponíveis. Nome, telefone e demais dados pessoais não aparecem nesse link. Quem receber o link não pode alterar sua seleção.</p><h2>Cookies e fornecedores</h2><p>Usamos cookies essenciais para manter sessões e proteger acessos. Os serviços de hospedagem, banco de dados e armazenamento podem processar os dados necessários a suas funções. Os links de WhatsApp e Instagram abrem serviços externos com suas próprias políticas.</p><h2>Controle e exclusão</h2><p>Na área Minha Seleção, você pode remover imóveis, exportar os dados disponíveis e excluir o cadastro protegido pela sessão atual. A exclusão remove a seleção e o histórico de solicitações associado. Para recuperação, correção de dados ou outras solicitações de privacidade, entre em contato com a Mari.</p><h2>Conservação</h2><p>Os dados permanecem enquanto o cadastro estiver ativo ou até a solicitação de exclusão, ressalvadas obrigações aplicáveis. Registros técnicos de segurança têm retenção limitada. O acesso administrativo é restrito.</p><div className="button-row"><Link className="button" href="/minha-selecao">Gerenciar meus dados</Link><Link className="button secondary" href="/contato">Solicitar atendimento</Link></div></article>; }
+
+export default function Page() {
+  return (
+    <article className="container legal section">
+      <p className="eyebrow">PRIVACIDADE</p>
+      <h1>Seus dados, suas escolhas.</h1>
+      <p>
+        Este site utiliza primeiro nome, telefone, imóveis selecionados e
+        solicitações de contato para manter sua seleção e permitir atendimento
+        pela Mari Corretora de Imóveis.
+      </p>
+      <h2>Seleção por telefone</h2>
+      <p>
+        O telefone funciona como identificador de uma seleção de conveniência e
+        permite recuperá-la em outro dispositivo, sem senha, SMS ou WhatsApp. A
+        seleção contém somente informações públicas dos imóveis disponíveis no
+        catálogo. Esse acesso não confirma a identidade da pessoa e não libera
+        nome, telefone, histórico de atendimento, anotações do CRM, documentos,
+        dados financeiros, endereços privados ou recursos administrativos.
+      </p>
+      <h2>Links compartilhados</h2>
+      <p>
+        O link da seleção exibe apenas imóveis públicos disponíveis. Nome,
+        telefone e demais dados pessoais não aparecem nesse link. Quem receber
+        o link não pode alterar a seleção original.
+      </p>
+      <h2>Cookies e fornecedores</h2>
+      <p>
+        Usamos cookies essenciais para manter sessões técnicas. Os serviços de
+        hospedagem, banco de dados e armazenamento podem processar os dados
+        necessários a suas funções. Links de WhatsApp e Instagram abrem
+        serviços externos com políticas próprias.
+      </p>
+      <h2>Controle e exclusão</h2>
+      <p>
+        Na área Minha Seleção, você pode adicionar e remover imóveis públicos.
+        Como o telefone não verifica identidade, ele não autoriza exportar,
+        alterar ou excluir dados pessoais do cadastro. Para correção, acesso ou
+        exclusão de dados pessoais, entre em contato com a Mari por um canal de
+        atendimento para que a identidade seja confirmada de forma adequada.
+      </p>
+      <h2>Conservação</h2>
+      <p>
+        Os dados permanecem enquanto o cadastro estiver ativo ou até uma
+        solicitação válida de exclusão, ressalvadas obrigações aplicáveis.
+        Registros técnicos de segurança têm retenção limitada. O acesso
+        administrativo é restrito.
+      </p>
+      <div className="button-row">
+        <Link className="button" href="/minha-selecao">
+          Acessar minha seleção
+        </Link>
+        <Link className="button secondary" href="/contato">
+          Solicitar atendimento
+        </Link>
+      </div>
+    </article>
+  );
+}

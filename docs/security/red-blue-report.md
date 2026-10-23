@@ -125,12 +125,29 @@ O novo exame encontrou três regressões/lacunas antes da aprovação:
 
 Todas foram corrigidas. O reteste final não encontrou vulnerabilidade crítica ou alta nova e reproduzível dentro do escopo local. A auditoria independente aprovou as cinco correções para pull request e revisão humana.
 
+## Ajuste de escopo da Rodada 2 — seleção por telefone
+
+A regra de produto foi esclarecida em 23 de outubro de 2026: o telefone é o identificador intencional da seleção e deve permitir sua recuperação em qualquer dispositivo sem SMS, OTP ou senha. Esse comportamento não é tratado como vulnerabilidade. A seleção é um recurso público de conveniência com privacidade limitada, e não uma conta com identidade verificada.
+
+A revisão encontrou uma incompatibilidade entre essa regra e a implementação: um telefone existente retornava `recoveryRequired` e bloqueava o acesso fora do navegador original. Ao simplesmente liberar a sessão anterior, porém, ela também permitiria acionar operações que dependiam do lead, como solicitar contato sem reenviar identidade e excluir o cadastro completo. O Blue Team separou essas capacidades antes de habilitar a recuperação.
+
+| Vulnerabilidade/limite | Gravidade | Status | Correção | Teste executado | Resultado do reteste | Risco residual |
+| --- | --- | --- | --- | --- | --- | --- |
+| MARI-BT2-001 — sessão de seleção carregava PII do lead na resposta | Alta se combinada com recuperação por telefone | Corrigida | `clientState` retorna somente imóveis publicados em DTO público e token de compartilhamento; nome e telefone foram removidos | Unitário com PII e endereço privado sentinela + E2E em segundo navegador | Resposta contém apenas `items` e `publicToken`; sentinelas ausentes | Quem conhece o telefone pode ver e alterar a lista de imóveis públicos, conforme regra de produto |
+| MARI-BT2-002 — sessão de seleção podia autorizar exclusão integral do lead | Alta | Corrigida | Rota `DELETE /api/client/account` removida; solicitações LGPD seguem atendimento com verificação adequada | Teste de rota + E2E autenticado pela seleção | Rota retorna 404 e o lead permanece no CRM | Exclusão de dados exige processo assistido externo ao carrinho |
+| MARI-BT2-003 — contato reutilizava identidade da sessão de seleção | Média | Corrigida | Cada contato exige nome, telefone e consentimento próprios; a sessão de seleção é ignorada | E2E tenta contato somente com sessão e recebe 400; envio completo recebe 200 | Nenhuma ação de CRM é autorizada apenas pelo telefone recuperado | Formulário continua público e sujeito aos limites de abuso documentados |
+| MARI-BT2-004 — título administrativo podia aparecer no link compartilhado | Média | Corrigida | Resposta compartilhada usa título genérico e DTO público | Unitário + E2E | Título fixo “Seleção de imóveis”; sem PII | Imóveis do link continuam públicos por definição |
+| Recuperação em outro dispositivo | Regra de produto | Implementada | Nova rota limitada `POST /api/client/recover`, com normalização e rate limit por IP e telefone; interface pede somente telefone | Unitário, teste de rota e E2E desktop/mobile | Recuperação funciona sem OTP; adicionar/remover imóveis funciona; admin continua 401 | Existência de uma seleção pode ser inferida por quem conhece o telefone; limites reduzem enumeração automatizada |
+
+Não foram adicionados SMS, OTP, senha ou custos recorrentes. A sessão recuperada não dá acesso a dados do lead, histórico, anotações, documentos, finanças, endereços privados ou rotas administrativas. A política de privacidade, o README e a arquitetura agora registram explicitamente esse modelo.
+
 ## Validação final
 
 | Verificação | Resultado final |
 | --- | --- |
-| Testes focados de segurança | 17/17 aprovados |
-| `npm test` | 93/93 aprovados em 11 arquivos |
+| Testes focados de segurança da Rodada 1 | 17/17 aprovados |
+| Testes focados do ajuste da Rodada 2 | 7/7 aprovados |
+| `npm test` | 97/97 aprovados em 12 arquivos |
 | `npm run typecheck` | Aprovado |
 | `npm run lint` | 0 erros; 3 avisos preexistentes |
 | `npx prisma validate` | Aprovado |

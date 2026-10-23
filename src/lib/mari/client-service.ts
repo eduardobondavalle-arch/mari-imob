@@ -2,7 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { db } from "./db";
 import { assert, rateLimit, requestIp } from "./http";
-import { createSession, requireClient, session } from "./auth";
+import { createSession, requireSelectionAccess, selectionSession } from "./auth";
 import { identitySchema } from "./validation";
 import { listingDto, listingInclude } from "./catalog";
 import { ensureClientSelection } from "./client-selection";
@@ -15,10 +15,10 @@ async function available(id?: string) {
     );
 }
 export async function clientState() {
-  const auth = await session("client");
-  if (!auth?.lead) return null;
+  const auth = await selectionSession();
+  if (!auth?.leadId) return null;
   const selection = await db.selection.findUnique({
-    where: { clientLeadId: auth.lead.id },
+    where: { clientLeadId: auth.leadId },
     include: {
       items: {
         include: { property: { include: listingInclude } },
@@ -27,8 +27,6 @@ export async function clientState() {
     },
   });
   return {
-    firstName: auth.lead.firstName,
-    phone: auth.lead.phone,
     publicToken: selection?.publicToken || "",
     items:
       selection?.items
@@ -41,10 +39,10 @@ export async function registerSelection(input: unknown, request: Request) {
   await rateLimit(`register:${requestIp(request)}`, 20);
   await rateLimit(`register-phone:${data.phone}`, 6);
   await available(data.propertyId);
-  const current = await session("client");
-  if (current?.lead) {
+  const current = await selectionSession();
+  if (current?.leadId) {
     await db.$transaction(async (tx) => {
-      const selection = await ensureClientSelection(current.lead!.id, tx);
+      const selection = await ensureClientSelection(current.leadId!, tx);
       if (data.propertyId)
         await tx.selectionItem.upsert({
           where: {
@@ -57,14 +55,31 @@ export async function registerSelection(input: unknown, request: Request) {
           create: { selectionId: selection.id, propertyId: data.propertyId },
         });
       await tx.lead.update({
-        where: { id: current.lead!.id },
+        where: { id: current.leadId! },
         data: { lastActivityAt: new Date() },
       });
     });
     return { ok: true };
   }
   const existing = await db.lead.findUnique({ where: { phone: data.phone } });
-  if (existing) return { recoveryRequired: true };
+  if (existing) {
+    await db.$transaction(async (tx) => {
+      const selection = await ensureClientSelection(existing.id, tx);
+      if (data.propertyId)
+        await tx.selectionItem.upsert({
+          where: {
+            selectionId_propertyId: {
+              selectionId: selection.id,
+              propertyId: data.propertyId,
+            },
+          },
+          update: {},
+          create: { selectionId: selection.id, propertyId: data.propertyId },
+        });
+    });
+    await createSession("client", existing.id);
+    return { ok: true, recovered: true };
+  }
   const lead = await db.$transaction(async (tx) => {
     const created = await tx.lead.create({
       data: {
@@ -84,11 +99,23 @@ export async function registerSelection(input: unknown, request: Request) {
   await createSession("client", lead.id);
   return { ok: true };
 }
+export async function recoverSelection(input: unknown, request: Request) {
+  const data = z.object({ phone: identitySchema.shape.phone }).parse(input);
+  await rateLimit(`recover:${requestIp(request)}`, 20);
+  await rateLimit(`recover-phone:${data.phone}`, 6);
+  const lead = await db.lead.findUnique({
+    where: { phone: data.phone },
+    select: { id: true, selection: { select: { id: true } } },
+  });
+  assert(lead?.selection, 404, "Nenhuma seleção foi encontrada para este telefone.");
+  await createSession("client", lead.id);
+  return { ok: true };
+}
 export async function changeSelection(id: string, remove = false) {
-  const lead = await requireClient();
+  const access = await requireSelectionAccess();
   if (!remove) await available(id);
   await db.$transaction(async (tx) => {
-    const selection = await ensureClientSelection(lead.id, tx);
+    const selection = await ensureClientSelection(access.leadId, tx);
     if (remove)
       await tx.selectionItem.deleteMany({
         where: { selectionId: selection.id, propertyId: id },
@@ -102,7 +129,7 @@ export async function changeSelection(id: string, remove = false) {
         create: { selectionId: selection.id, propertyId: id },
       });
     await tx.lead.update({
-      where: { id: lead.id },
+      where: { id: access.leadId },
       data: { lastActivityAt: new Date() },
     });
   });
@@ -121,7 +148,7 @@ export async function sharedSelection(publicToken: string) {
   });
   return selection
     ? {
-        title: selection.title,
+        title: "Seleção de imóveis",
         items: selection.items.map((item) => listingDto(item.property)),
       }
     : null;
@@ -139,21 +166,21 @@ export async function contactRequest(input: unknown, request: Request) {
     .parse(input);
   assert(data.consent, 400, "Confirme a solicitação de contato.");
   await available(data.propertyId);
-  let lead = (await session("client"))?.lead;
-  if (!lead) {
-    const identity = identitySchema.parse(data);
-    await rateLimit(`contact-phone:${identity.phone}`, 8);
-    lead = await db.lead.upsert({
-      where: { phone: identity.phone },
-      update: { lastActivityAt: new Date() },
-      create: {
-        firstName: identity.firstName,
-        phone: identity.phone,
-        source: "solicitacao-contato",
-        consentAt: new Date(),
-      },
-    });
-  }
+  // A convenience selection session is not proof of identity and therefore
+  // never authorizes a CRM action. Contact submissions validate their own
+  // public-form identity and consent every time.
+  const identity = identitySchema.parse(data);
+  await rateLimit(`contact-phone:${identity.phone}`, 8);
+  const lead = await db.lead.upsert({
+    where: { phone: identity.phone },
+    update: { lastActivityAt: new Date() },
+    create: {
+      firstName: identity.firstName,
+      phone: identity.phone,
+      source: "solicitacao-contato",
+      consentAt: new Date(),
+    },
+  });
   await ensureClientSelection(lead.id);
   await db.$transaction([
     db.contactRequest.create({
@@ -168,10 +195,5 @@ export async function contactRequest(input: unknown, request: Request) {
       data: { lastActivityAt: new Date() },
     }),
   ]);
-  return { ok: true };
-}
-export async function deleteAccount() {
-  const lead = await requireClient();
-  await db.lead.delete({ where: { id: lead.id } });
   return { ok: true };
 }

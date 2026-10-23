@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   rateLimit: vi.fn(),
   readJson: vi.fn(),
   saveConsultation: vi.fn(),
+  recoverSelection: vi.fn(),
 }));
 const functions = vi.hoisted(
   () => (names: string[]) =>
@@ -44,16 +45,16 @@ vi.mock("@/lib/mari/auth", () => ({
   ...functions(["adminLogin", "changePassword", "logout"]),
   requireAdmin: mocks.requireAdmin,
 }));
-vi.mock("@/lib/mari/client-service", () =>
-  functions([
+vi.mock("@/lib/mari/client-service", () => ({
+  ...functions([
     "clientState",
     "registerSelection",
     "changeSelection",
     "contactRequest",
     "sharedSelection",
-    "deleteAccount",
   ]),
-);
+  recoverSelection: mocks.recoverSelection,
+}));
 vi.mock("@/lib/mari/admin-service", () =>
   functions([
     "adminProperties",
@@ -108,7 +109,7 @@ vi.mock("@/lib/mari/news-service", () =>
   functions(["adminNews", "saveNews", "deleteNews"]),
 );
 
-import { POST } from "@/app/api/[...path]/route";
+import { DELETE, POST } from "@/app/api/[...path]/route";
 
 const context = (path: string[]) => ({ params: Promise.resolve({ path }) });
 
@@ -118,6 +119,7 @@ describe("superfície de upload", () => {
     mocks.requireAdmin.mockResolvedValue({ id: "admin-1" });
     mocks.uploadMedia.mockResolvedValue({ id: "media-1" });
     mocks.saveConsultation.mockResolvedValue({ ok: true });
+    mocks.recoverSelection.mockResolvedValue({ ok: true });
   });
 
   it("não oferece upload público para proprietários", async () => {
@@ -156,5 +158,24 @@ describe("superfície de upload", () => {
     expect(mocks.saveConsultation).toHaveBeenCalledWith({
       phone: "5547999991234",
     });
+  });
+
+  it("oferece recuperação da seleção pelo telefone sem criar uma rota de conta", async () => {
+    mocks.readJson.mockResolvedValue({ phone: "5547999991234" });
+    const recovered = await POST(
+      new Request("https://mari.example/api/client/recover", { method: "POST" }),
+      context(["client", "recover"]),
+    );
+    const account = await DELETE(
+      new Request("https://mari.example/api/client/account", { method: "DELETE" }),
+      context(["client", "account"]),
+    );
+
+    expect(recovered.status).toBe(200);
+    expect(mocks.recoverSelection).toHaveBeenCalledWith(
+      { phone: "5547999991234" },
+      expect.any(Request),
+    );
+    expect(account.status).toBe(404);
   });
 });

@@ -1,6 +1,6 @@
 import { readMedia } from "@/lib/mari/storage";
 import { errorResponse, HttpError } from "@/lib/mari/http";
-import { session } from "@/lib/mari/auth";
+import { adminSession } from "@/lib/mari/auth";
 export const runtime = "nodejs";
 export async function GET(
   _request: Request,
@@ -13,7 +13,7 @@ export async function GET(
       media = await readMedia(key);
     } catch (error) {
       if (!(error instanceof HttpError) || error.status !== 404) throw error;
-      const admin = await session("admin");
+      const admin = await adminSession();
       if (!admin?.admin) throw error;
       media = await readMedia(key, true);
     }

@@ -17,10 +17,10 @@ import {
 import {
   clientState,
   registerSelection,
+  recoverSelection,
   changeSelection,
   contactRequest,
   sharedSelection,
-  deleteAccount,
 } from "@/lib/mari/client-service";
 import {
   adminProperties,
@@ -326,12 +326,11 @@ async function handle(request: Request, context: Context) {
       result = await clientState();
     else if (path === "client/register" && method === "POST")
       result = await registerSelection(await readJson(request), request);
+    else if (path === "client/recover" && method === "POST")
+      result = await recoverSelection(await readJson(request), request);
     else if (path === "client/logout" && method === "POST") {
       await logout("client");
       result = { ok: true };
-    } else if (path === "client/account" && method === "DELETE") {
-      result = await deleteAccount();
-      await logout("client");
     } else if (
       segments[0] === "selection" &&
       segments[1] &&

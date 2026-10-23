@@ -98,7 +98,7 @@ export function PublicFrame({ children }: { children: React.ReactNode }) {
             </Link>
             <button className="client-login" aria-label="Acesso do cliente" onClick={openLogin}>
               <UserRound size={17} />
-              <span>{client ? client.firstName : "Acesso do cliente"}</span>
+              <span>{client ? "Seleção ativa" : "Acesso do cliente"}</span>
             </button>
             <button
               className="mobile-menu icon-button"

@@ -19,9 +19,9 @@ O projeto anterior era um catálogo demonstrativo de locação. A implementaçã
 
 **Sessões opacas.** Tokens aleatórios de 256 bits em cookies HttpOnly/SameSite; somente SHA-256 dos tokens no banco. Secure em produção. Administração: 8 horas; cliente: 30 dias. Senhas com scrypt, salt individual e comparação em tempo constante. Troca de senha revoga as sessões administrativas.
 
-**Primeira seleção.** Nome, telefone normalizado e consentimento criam um interessado novo e sua seleção em uma operação. O navegador recebe uma sessão opaca. Um telefone existente nunca autoriza leitura nem alterações; sem uma sessão válida, a recuperação é assistida pela Mari.
+**Primeira seleção e recuperação.** Nome, telefone normalizado e consentimento criam um interessado novo e sua seleção em uma operação. O telefone identifica a seleção e permite recuperá-la em outro dispositivo sem SMS, OTP ou senha. Essa sessão é deliberadamente limitada a ler e alterar a lista de imóveis públicos: não retorna dados do lead, CRM, atendimentos, documentos, finanças, endereços privados ou permissões administrativas. Trata-se de conveniência com privacidade limitada, não de identidade verificada.
 
-**Contato.** Solicitações são persistidas e podem reutilizar um telefone existente sem expor seu cadastro ou alterar seu nome. A criação de contato não estabelece sessão de acesso. Abrir WhatsApp não equivale a enviar mensagem; a aplicação não afirma entrega.
+**Contato.** Solicitações são persistidas e podem reutilizar um telefone existente sem expor seu cadastro ou alterar seu nome. A sessão da seleção nunca autoriza uma ação no CRM: cada solicitação valida novamente nome, telefone e consentimento do formulário público. A criação de contato não estabelece sessão de acesso. Abrir WhatsApp não equivale a enviar mensagem; a aplicação não afirma entrega.
 
 **Proteção HTTP.** Mutações verificam Origin, autenticação e propriedade. Limites de requisições e tentativas ficam no banco. JSON tem limite de 150 KB; upload tem limite durante leitura do stream. Cabeçalhos encaminhados só são usados com `TRUST_PROXY=true`, que exige proxy confiável sobrescrevendo o cabeçalho. Sem isso, o limite por IP é conservador e compartilhado.
 

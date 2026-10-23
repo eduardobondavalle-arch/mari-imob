@@ -32,13 +32,13 @@ Dados e uploads locais ficam em `.data/` e sobrevivem ao reinício. Preserve ess
 2. Ative a estrela para mostrar o imóvel nos destaques da página inicial.
 3. Em **Configurações**, gerencie tags, categorias, situações e campos adicionais. Campos públicos habilitados como filtros aparecem na busca automaticamente.
 4. No site, o clique em um imóvel abre uma pré-visualização. Fechar restaura a busca e a rolagem; o anúncio também possui URL própria.
-5. O visitante toca no coração, informa primeiro nome/telefone e cria a seleção. A sessão protegida fica vinculada ao navegador; o telefone não funciona como credencial.
+5. O visitante toca no coração, informa primeiro nome/telefone e cria a seleção. O telefone permite recuperar em outro dispositivo somente os imóveis públicos guardados.
 6. Em **Interessados**, consulte seleções e solicitações de contato. O painel atualiza a cada 15 segundos.
 7. Em **Editor do site**, passe o mouse sobre uma região, clique em editar e ajuste o painel lateral. **Salvar rascunho** mantém o site público intacto; **Publicar alterações** aplica o conteúdo.
 
 ## Sessão do cliente
 
-O cadastro convencional não envia SMS. Ao criar uma seleção, o servidor grava apenas o resumo criptográfico de um token aleatório e entrega o token em cookie `HttpOnly`, `Secure` em HTTPS e `SameSite=Lax`. Um telefone já cadastrado não libera a seleção em outro navegador; a recuperação exige atendimento assistido pela Mari. Desafios OTP antigos permanecem apenas como histórico até a rotina de retenção removê-los.
+O cadastro convencional não envia SMS, OTP nem exige senha. O telefone funciona como identificador de uma seleção de conveniência e permite recuperá-la em outro navegador. A resposta contém exclusivamente imóveis públicos disponíveis no catálogo e um token público de compartilhamento; nome, telefone, dados do atendimento, CRM, documentos, informações financeiras, endereços privados e recursos administrativos nunca são liberados por esse acesso. A identificação por telefone não comprova identidade e não autoriza exportar, alterar ou excluir dados pessoais. A sessão técnica usa token aleatório armazenado em cookie `HttpOnly`, `Secure` em HTTPS e `SameSite=Lax`; o servidor persiste apenas seu resumo criptográfico.
 
 ## Produção
 
@@ -63,6 +63,6 @@ npm.cmd run build
 npm.cmd run test:e2e
 ```
 
-Os E2E exigem servidor e banco locais abertos e Chrome instalado. Exercitam cadastro sem SMS, isolamento entre navegadores, upload, filtros reais, modal/rolagem, seleção, privacidade, CRM e publicação de conteúdo em desktop/mobile. Criam registros temporários identificados como teste e os removem ao terminar. Usam as credenciais locais iniciais; se a senha mudou, forneça `TEST_ADMIN_EMAIL` e `TEST_ADMIN_PASSWORD` no ambiente. Não rode esses testes contra produção.
+Os E2E exigem servidor e banco locais abertos e Chrome instalado. Exercitam cadastro e recuperação por telefone sem SMS, limite público da seleção, upload, filtros reais, modal/rolagem, privacidade, CRM e publicação de conteúdo em desktop/mobile. Criam registros temporários identificados como teste e os removem ao terminar. Usam as credenciais locais iniciais; se a senha mudou, forneça `TEST_ADMIN_EMAIL` e `TEST_ADMIN_PASSWORD` no ambiente. Não rode esses testes contra produção.
 
 Capturas atuais: `docs/mari/`. O catálogo demonstrativo e os documentos anteriores permanecem como histórico, sem participar do catálogo público da Mari.
