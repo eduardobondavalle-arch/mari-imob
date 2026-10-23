@@ -24,7 +24,7 @@ test("jornada real: cadastro sem SMS, fotos, filtros, seleção, CRM e editor", 
   const unique = `${info.project.name}-${Date.now()}`;
   const phone = `479${String(Date.now()).slice(-8)}`;
   const title = `Imóvel de teste automatizado ${unique}`;
-  let propertyId = "", fieldId = "", leadId = "", imageId = "";
+  let propertyId = "", fieldId = "", leadId = "", imageId = "", convertedOwnerPropertyId = "";
   let initialContent: Record<string, unknown> | null = null;
   const visitor = await browser.newContext({ viewport: info.project.use.viewport, extraHTTPHeaders: headers, httpCredentials: info.project.use.httpCredentials });
   const guest = await visitor.newPage();
@@ -84,7 +84,18 @@ test("jornada real: cadastro sem SMS, fotos, filtros, seleção, CRM e editor", 
     await expect(guest.getByText("1 imóvel selecionado", { exact: true })).toBeVisible();
     await expect(guest.locator(".cri-hero-title")).toContainText(title.toUpperCase());
     const crm = await (await page.request.get(`/api/admin/leads?q=${phone}`)).json();
-    leadId = crm[0].id; expect(crm).toHaveLength(1); expect(crm[0].selection._count.items).toBe(1);
+    leadId = crm[0].id;
+    const trustedBefore = {
+      firstName: crm[0].firstName,
+      source: crm[0].source,
+      qualified: crm[0].qualified,
+      stageId: crm[0].stageId,
+      position: crm[0].position,
+      consentAt: crm[0].consentAt,
+      lastActivityAt: crm[0].lastActivityAt,
+      updatedAt: crm[0].updatedAt,
+    };
+    expect(crm).toHaveLength(1); expect(crm[0].selection._count.items).toBe(1);
     const outsider = await browser.newContext({ extraHTTPHeaders: headers, httpCredentials: info.project.use.httpCredentials });
     const shared = await (await outsider.request.get(`/api/shared/${selected.publicToken}`)).json();
     expect(Object.keys(shared).sort()).toEqual(["items", "title"]); expect(shared.title).toBe("Seleção de imóveis"); expect(JSON.stringify(shared)).not.toContain(phone);
@@ -118,7 +129,23 @@ test("jornada real: cadastro sem SMS, fotos, filtros, seleção, CRM e editor", 
     expect((await (await visitor.request.get("/api/client")).json()).items).toHaveLength(1);
     expect((await visitor.request.post("/api/contact", { data: { consent: true, propertyId, message: "Contato sem identidade" } })).status()).toBe(400);
     expect((await visitor.request.post("/api/contact", { data: { firstName: "Teste", phone, consent: true, propertyId, message: "Contato automatizado de teste" } })).ok()).toBe(true);
-    const detail = await (await page.request.get(`/api/admin/leads/${leadId}`)).json(); expect(detail.requests).toHaveLength(1);
+    const ownerResponse = await visitor.request.post("/api/owner-submissions", { data: { firstName: "Pessoa pública", phone, purpose: "sale", propertyType: `Apartamento ${unique}`, city: "Balneário Camboriú", neighborhood: "Centro", location: "Localização aproximada", area: 120, bedrooms: 3, askingPrice: 2500000, notes: "Captação automatizada para teste de integridade.", consent: true } });
+    expect(ownerResponse.ok()).toBe(true);
+    const ownerSubmissionId = (await ownerResponse.json()).id;
+    const converted = await page.request.post(`/api/admin/owner-submissions/${ownerSubmissionId}/convert`, { headers, data: {} });
+    expect(converted.ok()).toBe(true); convertedOwnerPropertyId = (await converted.json()).id;
+    const detail = await (await page.request.get(`/api/admin/leads/${leadId}`)).json();
+    expect(detail.requests).toHaveLength(1);
+    expect({
+      firstName: detail.firstName,
+      source: detail.source,
+      qualified: detail.qualified,
+      stageId: detail.stageId,
+      position: detail.position,
+      consentAt: detail.consentAt,
+      lastActivityAt: detail.lastActivityAt,
+      updatedAt: detail.updatedAt,
+    }).toEqual(trustedBefore);
     expect((await page.request.post("/api/admin/properties", { headers: { origin: "https://malicioso.invalid" }, data: {} })).status()).toBe(403);
     const malicious = await page.request.post("/api/admin/upload", { headers, multipart: { file: { name: "malicioso.svg", mimeType: "image/svg+xml", buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>') } } }); expect(malicious.status()).toBe(400);
     await outsider.close();
@@ -138,6 +165,7 @@ test("jornada real: cadastro sem SMS, fotos, filtros, seleção, CRM e editor", 
     await page.goto("/admin?tab=leads"); await page.screenshot({ path: `docs/mari/crm-${info.project.name}.png`, fullPage: true });
   } finally {
     if (initialContent) { const settings = await (await page.request.get("/api/admin/settings")).json(); await page.request.post("/api/admin/content", { headers, data: { action: "publish", content: initialContent, revision: settings.content.revision } }); }
+    if (convertedOwnerPropertyId) await page.request.delete(`/api/admin/properties/${convertedOwnerPropertyId}`, { headers, data: {} });
     if (propertyId) await page.request.delete(`/api/admin/properties/${propertyId}`, { headers, data: {} });
     if (imageId) await page.request.delete(`/api/admin/media/${imageId}`, { headers, data: {} });
     if (fieldId) await page.request.delete(`/api/admin/fields/${fieldId}`, { headers, data: {} });

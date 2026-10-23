@@ -141,13 +141,29 @@ A revisão encontrou uma incompatibilidade entre essa regra e a implementação:
 
 Não foram adicionados SMS, OTP, senha ou custos recorrentes. A sessão recuperada não dá acesso a dados do lead, histórico, anotações, documentos, finanças, endereços privados ou rotas administrativas. A política de privacidade, o README e a arquitetura agora registram explicitamente esse modelo.
 
+## Correções finais — integridade da atividade comercial
+
+Uma revisão posterior identificou três caminhos públicos que ainda alteravam `lastActivityAt` apenas com o conhecimento do telefone: formulário de contato, captação de proprietário e inclusão/remoção no carrinho. A revisão do mesmo padrão encontrou também a atualização equivalente ao reutilizar uma sessão existente em `registerSelection`.
+
+| Achado | Gravidade | Status | Correção | Evidência de regressão | Risco residual |
+| --- | --- | --- | --- | --- | --- |
+| Contato público atualizava atividade do lead existente | Média | Corrigido | `upsert` preserva o lead com `update: {}` e somente cria a solicitação associada | Unitário confirma atributos intactos e criação do contato; E2E confirma `lastActivityAt` invariável | A solicitação pública não verificada continua visível no CRM como evento próprio |
+| Captação pública atualizava atividade do lead existente | Média | Corrigido | `saveOwnerSubmission` preserva todos os campos do lead com `update: {}` | Unitário confirma preservação e associação; E2E converte a captação em imóvel sem alterar o lead | A captação continua associada pelo telefone, conforme lógica comercial existente |
+| Carrinho atualizava indicador comercial ao adicionar/remover | Média | Corrigido | Removida a escrita no lead em `changeSelection` | Unitário cobre remoção; E2E cobre remoção e inclusão após recuperação em outro dispositivo | A lista pública permanece alterável por quem conhece o telefone, conforme regra do produto |
+| Reutilização da sessão em `registerSelection` mantinha caminho alternativo de atualização | Média | Corrigido durante reteste adversarial | Removida a escrita no lead no fluxo alternativo do carrinho | Unitário específico confirma ausência de `lead.update` | Nenhum indicador comercial é derivado de atividade não verificada do carrinho |
+
+Não houve migration, exclusão de registros, mudança de layout ou alteração no fluxo visual. Contato, captação, conversão em imóvel, seleção, recuperação, compartilhamento e acesso administrativo foram preservados.
+
+A revisão independente aprovou o diff: não restou escrita em atributos comerciais do lead nos fluxos públicos revisados, e a conversão de captação continua transacional e idempotente. Como risco residual, contatos e captações permanecem associados pelo telefone informado sem comprovação de identidade; o CRM deve tratá-los como eventos públicos não verificados. Diferentemente de `Consultation`, esses dois modelos não possuem hoje um campo explícito `identityVerified`, e essa distinção depende do tipo/origem do registro.
+
 ## Validação final
 
 | Verificação | Resultado final |
 | --- | --- |
 | Testes focados de segurança da Rodada 1 | 17/17 aprovados |
 | Testes focados do ajuste da Rodada 2 | 7/7 aprovados |
-| `npm test` | 97/97 aprovados em 12 arquivos |
+| Testes focados das correções finais | 7/7 aprovados |
+| `npm test` | 101/101 aprovados em 13 arquivos |
 | `npm run typecheck` | Aprovado |
 | `npm run lint` | 0 erros; 3 avisos preexistentes |
 | `npx prisma validate` | Aprovado |

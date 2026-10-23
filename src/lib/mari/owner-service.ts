@@ -7,11 +7,28 @@ import { ownerSubmissionSchema } from "./validation";
 export async function saveOwnerSubmission(input: unknown) {
   const data = ownerSubmissionSchema.parse(input);
   return db.$transaction(async (tx) => {
-    const stage = await tx.leadStage.findFirstOrThrow({ where: { isDefault: true } });
-    const lead = await tx.lead.upsert({ where: { phone: data.phone }, create: { firstName: data.firstName, phone: data.phone, source: "Captação de proprietário", consentAt: new Date(), stageId: stage.id, position: await tx.lead.count({ where: { stageId: stage.id } }) }, update: { lastActivityAt: new Date() } });
+    const stage = await tx.leadStage.findFirstOrThrow({
+      where: { isDefault: true },
+    });
+    const lead = await tx.lead.upsert({
+      where: { phone: data.phone },
+      create: {
+        firstName: data.firstName,
+        phone: data.phone,
+        source: "Captação de proprietário",
+        consentAt: new Date(),
+        stageId: stage.id,
+        position: await tx.lead.count({ where: { stageId: stage.id } }),
+      },
+      update: {},
+    });
     const { firstName: _name, phone: _phone, consent: _consent, ...fields } = data;
-    void _name; void _phone; void _consent;
-    const row = await tx.ownerSubmission.create({ data: { ...fields, leadId: lead.id } });
+    void _name;
+    void _phone;
+    void _consent;
+    const row = await tx.ownerSubmission.create({
+      data: { ...fields, leadId: lead.id },
+    });
     return { ok: true, id: row.id };
   });
 }
