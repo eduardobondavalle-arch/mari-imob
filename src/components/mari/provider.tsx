@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Heart, ArrowRight, ShieldCheck } from "lucide-react";
 import { api, Modal, Notice } from "./ui";
 import { contentSchema, normalizePhone } from "@/lib/mari/validation";
@@ -27,11 +28,13 @@ export const useMari = () => useContext(Context);
 export function MariProvider({
   initialContent,
   children,
+  exitProperties = [],
   presentation = false,
   demo = false,
 }: {
   initialContent: SiteContent;
   children: React.ReactNode;
+  exitProperties?: Listing[];
   presentation?: boolean;
   demo?: boolean;
 }) {
@@ -41,6 +44,7 @@ export function MariProvider({
   const [intent, setIntent] = useState<Intent | null>(null);
   const [error, setError] = useState("");
   const [presentationNotice, setPresentationNotice] = useState(false);
+  const [exitCapture, setExitCapture] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   async function refresh() {
@@ -80,6 +84,36 @@ export function MariProvider({
     window.parent.postMessage({ type: "mari-preview-ready" }, location.origin);
     return () => window.removeEventListener("message", listener);
   }, [pathname]);
+  useEffect(() => {
+    if (!ready || client || presentation || demo || intent || error || presentationNotice || exitCapture || !exitProperties.length) return;
+    if (/^\/(?:admin|editor-preview|minha-selecao|selecao|privacidade)/.test(pathname)) return;
+    if (sessionStorage.getItem("mari_exit_intent_seen")) return;
+    let armed = false;
+    let interacted = false;
+    const armTimer = window.setTimeout(() => { armed = true; }, 8000);
+    const mobileTimer = window.setTimeout(() => {
+      if (interacted && window.matchMedia("(pointer: coarse)").matches) show();
+    }, 45000);
+    const show = () => {
+      if (!armed && !window.matchMedia("(pointer: coarse)").matches) return;
+      sessionStorage.setItem("mari_exit_intent_seen", "1");
+      setExitCapture(true);
+    };
+    const onMouseOut = (event: MouseEvent) => {
+      if (!event.relatedTarget && event.clientY <= 12) show();
+    };
+    const onInteract = () => { interacted = true; };
+    document.addEventListener("mouseout", onMouseOut);
+    document.addEventListener("pointerdown", onInteract, { passive: true });
+    document.addEventListener("scroll", onInteract, { passive: true });
+    return () => {
+      window.clearTimeout(armTimer);
+      window.clearTimeout(mobileTimer);
+      document.removeEventListener("mouseout", onMouseOut);
+      document.removeEventListener("pointerdown", onInteract);
+      document.removeEventListener("scroll", onInteract);
+    };
+  }, [client, demo, error, exitCapture, exitProperties, intent, pathname, presentation, presentationNotice, ready]);
   async function select(property: Listing) {
     if (presentation) {
       setPresentationNotice(true);
@@ -156,6 +190,13 @@ export function MariProvider({
           onComplete={refresh}
         />
       )}{" "}
+      {exitCapture && (
+        <ExitCapture
+          properties={exitProperties}
+          onClose={() => setExitCapture(false)}
+          onComplete={refresh}
+        />
+      )}
       {error && (
         <Modal title="Não foi possível concluir" onClose={() => setError("")}>
           <div className="modal-content">
@@ -165,6 +206,66 @@ export function MariProvider({
       )}
     </Context.Provider>
   );
+}
+
+function ExitCapture({ properties, onClose, onComplete }: { properties: Listing[]; onClose: () => void; onComplete: () => Promise<void> }) {
+  const [selected, setSelected] = useState(properties[0]);
+  const [firstName, setFirstName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      await api("client/register", {
+        firstName,
+        phone: normalizePhone(phone),
+        consent,
+        propertyId: selected?.id,
+        purpose: selected?.purpose,
+      });
+      await onComplete();
+      setDone(true);
+    } catch (reason) {
+      setError((reason as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return <Modal title="Antes de ir…" wide onClose={onClose} className="exit-capture-modal">
+    <div className="exit-capture">
+      <div className="exit-capture-intro">
+        <span className="eyebrow">UMA ÚLTIMA SELEÇÃO PARA VOCÊ</span>
+        <h2>Puxa, não vai embora agora, seu novo imóvel pode estar aqui, deixa eu te chamar e te apresentar as melhores opções!</h2>
+        <div className="exit-property-list">
+          {properties.map((property) => {
+            const image = property.images[0];
+            return <button type="button" key={property.id} className={selected?.id === property.id ? "active" : ""} onClick={() => setSelected(property)} aria-pressed={selected?.id === property.id}>
+              <span className="exit-property-image">{image ? <Image src={`/media/${image.key}`} alt={image.alt || property.title} fill sizes="110px" /> : <Heart size={22} />}</span>
+              <span><strong>{property.title}</strong><small>{property.neighborhood} · {property.city}</small></span>
+            </button>;
+          })}
+        </div>
+      </div>
+      <div className="exit-capture-form">
+        {done ? <div className="exit-capture-success"><span className="round-icon"><Heart /></span><h2>Pronto, sua seleção foi criada!</h2><p>A Mari poderá chamar você no WhatsApp e apresentar as melhores opções.</p><button className="button full" onClick={onClose}>Continuar navegando</button></div> : <>
+          <h3>Posso falar com você?</h3>
+          <p>Deixe seu primeiro nome e WhatsApp. O imóvel escolhido ficará salvo na sua seleção.</p>
+          <form className="stack" onSubmit={submit}>
+            <label>Primeiro nome<input required minLength={2} maxLength={60} autoComplete="given-name" value={firstName} onChange={(event) => setFirstName(event.target.value)} /></label>
+            <label>Telefone com WhatsApp<input required type="tel" autoComplete="tel" placeholder="(47) 99999-9999" value={phone} onChange={(event) => setPhone(phoneMask(event.target.value))} /></label>
+            <label className="check-line"><input required type="checkbox" checked={consent} onChange={(event) => setConsent(event.target.checked)} /><span>Li a <Link href="/privacidade" target="_blank">política de privacidade</Link> e autorizo o contato sobre imóveis.</span></label>
+            <Notice error>{error}</Notice>
+            <button className="button full" disabled={busy}>{busy ? "Criando sua seleção…" : "Quero conhecer as melhores opções"}<ArrowRight size={18} /></button>
+          </form>
+        </>}
+      </div>
+    </div>
+  </Modal>;
 }
 function IdentityFlow({
   intent,

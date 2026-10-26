@@ -133,6 +133,15 @@ export async function homeFeatured() {
   });
   return rows.map((row) => listingDto(row));
 }
+export async function exitIntentProperties() {
+  const rows = await db.property.findMany({
+    where: { status: "published", offers: { some: { active: true } } },
+    include: listingInclude,
+    orderBy: [{ featured: "desc" }, { createdAt: "desc" }, { id: "asc" }],
+    take: 3,
+  });
+  return rows.map((row) => listingDto(row));
+}
 export async function searchCatalog(params: URLSearchParams) {
   const fields = await publicFields();
   const where = catalogWhere(params, fields);
