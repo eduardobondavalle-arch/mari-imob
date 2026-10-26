@@ -6,8 +6,9 @@ export function catalogWhere(
 ): Prisma.PropertyWhereInput {
   const and: Prisma.PropertyWhereInput[] = [
     { status: "published" },
-    { purpose: { in: ["sale", "rent"] } },
+    { offers: { some: { active: true } } },
   ];
+  const purpose = params.get("purpose");
   for (const key of [
     "purpose",
     "cityId",
@@ -20,7 +21,8 @@ export function catalogWhere(
     if (key === "city" && params.get("cityId")) continue;
     const value = params.get(key)?.slice(0, 100);
     if (key === "purpose") {
-      if (value === "sale" || value === "rent") and.push({ purpose: value });
+      if (["sale", "rent", "season"].includes(value || ""))
+        and.push({ offers: { some: { purpose: value, active: true } } });
       continue;
     }
     if (value) and.push({ [key]: value });
@@ -34,9 +36,14 @@ export function catalogWhere(
         },
       })),
     });
+  const price: { gte?: number; lte?: number } = {};
+  for (const [param, op] of [["minPrice", "gte"], ["maxPrice", "lte"]] as const) {
+    const raw = params.get(param);
+    if (raw && Number.isFinite(Number(raw)) && Number(raw) >= 0) price[op] = Number(raw);
+  }
+  if (Object.keys(price).length)
+    and.push({ offers: { some: { active: true, ...(purpose && ["sale", "rent", "season"].includes(purpose) ? { purpose } : {}), price } } });
   for (const [param, field, op] of [
-    ["minPrice", "price", "gte"],
-    ["maxPrice", "price", "lte"],
     ["minArea", "area", "gte"],
     ["maxArea", "area", "lte"],
     ["bedrooms", "bedrooms", "gte"],

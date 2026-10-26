@@ -25,6 +25,7 @@ export const identitySchema = z.object({
   phone: phoneSchema,
   consent: z.literal(true),
   propertyId: z.string().max(100).optional(),
+  purpose: z.enum(["sale", "rent", "season"]).optional(),
 });
 const httpsUrlSchema = z
   .string()
@@ -80,12 +81,17 @@ const optionalNumber = z.number().finite().min(0).max(1000000).nullable();
 export const propertySchema = z.object({
   title: z.string().trim().min(5).max(180),
   headline: z.string().trim().max(220).default(""),
-  purpose: z.enum(["sale", "rent"]),
+  purpose: z.enum(["sale", "rent", "season"]).default("sale"),
   type: z.string().trim().min(2).max(60),
   status: z.enum(["draft", "published", "hidden", "sold", "rented"]),
   featured: z.boolean(),
   superFeatured: z.boolean().default(false),
   price: z.number().finite().min(0).max(999999999999).nullable(),
+  offers: z.array(z.object({
+    purpose: z.enum(["sale", "rent", "season"]),
+    price: z.number().finite().min(0).max(999999999999).nullable(),
+    active: z.boolean().default(true),
+  })).min(1).max(3).optional(),
   condominiumFee: z.number().finite().min(0).max(999999999999).nullable().default(null),
   condominiumPeriod: z.enum(["monthly", "annual"]).nullable().default(null),
   iptuFee: z.number().finite().min(0).max(999999999999).nullable().default(null),

@@ -29,6 +29,7 @@ export type Listing = {
   featured: boolean;
   superFeatured: boolean;
   price: number | null;
+  offers: PropertyOffer[];
   condominiumFee?: number | null;
   condominiumPeriod?: string | null;
   iptuFee?: number | null;
@@ -64,6 +65,12 @@ export type Listing = {
   }[];
   tags: { id: string; name: string; key?: string | null }[];
   values: { fieldId: string; value: unknown; field: Field }[];
+};
+export type PropertyPurpose = "sale" | "rent" | "season";
+export type PropertyOffer = {
+  purpose: PropertyPurpose;
+  price: number | null;
+  active: boolean;
 };
 export type SiteContent = {
   brandName: string;
@@ -101,6 +108,7 @@ export type ClientState = {
 export const purposes: Record<string, string> = {
   sale: "Comprar",
   rent: "Alugar",
+  season: "Temporada",
 };
 export const statuses: Record<string, string> = {
   draft: "Rascunho",

@@ -128,6 +128,7 @@ model Property {
   category     Taxonomy?        @relation("category", fields: [categoryId], references: [id], onDelete: SetNull)
   situation    Taxonomy?        @relation("situation", fields: [situationId], references: [id], onDelete: SetNull)
   images       Media[]
+  offers       PropertyOffer[]
   tags         Tag[]
   values       PropertyValue[]
   selections   SelectionItem[]
@@ -143,6 +144,19 @@ model Property {
   @@index([status, purpose, featured(sort: Desc), createdAt(sort: Desc), id], map: "Property_status_purpose_featured_createdAt_id_idx")
   @@index([status, purpose, superFeatured, updatedAt(sort: Desc)], map: "Property_status_purpose_superFeatured_updatedAt_idx")
   @@index([status, purpose, price, id], map: "Property_status_purpose_price_id_idx")
+}
+
+model PropertyOffer {
+  id         String   @id @default(cuid())
+  propertyId String
+  purpose    String
+  price      Decimal? @db.Decimal(14, 2)
+  active     Boolean  @default(true)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@unique([propertyId, purpose])
+  @@index([purpose, active, price])
 }
 
 model Media {
@@ -232,6 +246,7 @@ model SelectionItem {
   property    Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   createdAt   DateTime  @default(now())
   position    Int      @default(0)
+  purpose     String?
   @@id([selectionId, propertyId])
 }
 

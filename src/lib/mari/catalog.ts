@@ -8,25 +8,36 @@ import { defaultContent } from "./defaults";
 import { safeHttpsUrl, safeInternalOrHttpsUrl } from "./validation";
 export const listingInclude = {
   images: { orderBy: { position: "asc" as const } },
+  offers: { orderBy: { createdAt: "asc" as const } },
   tags: true,
   category: true,
   situation: true,
   values: { include: { field: { include: { options: true } } } },
 } satisfies Prisma.PropertyInclude;
 type DbListing = Prisma.PropertyGetPayload<{ include: typeof listingInclude }>;
-export function listingDto(row: DbListing, admin = false): Listing {
+export function listingDto(row: DbListing, admin = false, requestedPurpose?: string | null): Listing {
+  const offers = row.offers?.length
+    ? row.offers.map((offer) => ({
+        purpose: offer.purpose as Listing["offers"][number]["purpose"],
+        price: offer.price === null ? null : Number(offer.price),
+        active: offer.active,
+      }))
+    : [{ purpose: row.purpose as Listing["offers"][number]["purpose"], price: row.price === null ? null : Number(row.price), active: true }];
+  const visibleOffers = admin ? offers : offers.filter((offer) => offer.active);
+  const selected = visibleOffers.find((offer) => offer.purpose === requestedPurpose) || visibleOffers[0] || offers[0];
   return {
     id: row.id,
     code: row.code,
     slug: row.slug,
     title: row.title,
     headline: row.headline,
-    purpose: row.purpose,
+    purpose: selected?.purpose || row.purpose,
     type: row.type,
     status: row.status,
     featured: row.featured,
     superFeatured: row.superFeatured,
-    price: row.price === null ? null : Number(row.price),
+    price: selected?.price ?? null,
+    offers: visibleOffers,
     condominiumFee:
       row.condominiumFee === null ? null : Number(row.condominiumFee),
     condominiumPeriod: row.condominiumPeriod,
@@ -100,7 +111,7 @@ export async function homeSuperFeatured() {
   const rows = await db.property.findMany({
     where: {
       status: "published",
-      purpose: { in: ["sale", "rent"] },
+      offers: { some: { active: true } },
       superFeatured: true,
     },
     include: listingInclude,
@@ -113,7 +124,7 @@ export async function homeFeatured() {
   const rows = await db.property.findMany({
     where: {
       status: "published",
-      purpose: { in: ["sale", "rent"] },
+      offers: { some: { active: true } },
       featured: true,
     },
     include: listingInclude,
@@ -127,7 +138,7 @@ export async function searchCatalog(params: URLSearchParams) {
   const where = catalogWhere(params, fields);
   const totalPromise = db.property.count({ where });
   const locationsPromise = db.property.findMany({
-    where: { status: "published", purpose: { in: ["sale", "rent"] } },
+    where: { status: "published", offers: { some: { active: true } } },
     select: { city: true, cityId: true, neighborhood: true, type: true },
     distinct: ["city", "neighborhood", "type"],
   });
@@ -143,19 +154,27 @@ export async function searchCatalog(params: URLSearchParams) {
     Math.max(1, Number.isFinite(requestedPage) ? Math.floor(requestedPage) : 1),
   );
   const sort = params.get("sort");
-  const orderBy: Prisma.PropertyOrderByWithRelationInput[] =
-    sort === "price-asc"
-      ? [{ price: { sort: "asc", nulls: "last" } }, { id: "asc" }]
-      : sort === "price-desc"
-        ? [{ price: { sort: "desc", nulls: "last" } }, { id: "asc" }]
-        : [{ featured: "desc" }, { createdAt: "desc" }, { id: "asc" }];
-  const itemsPromise = db.property.findMany({
-    where,
-    include: listingInclude,
-    orderBy,
-    skip: (page - 1) * pageSize,
-    take: pageSize,
-  });
+  const selectedPurpose = params.get("purpose");
+  const priceSort = sort === "price-asc" || sort === "price-desc";
+  const itemsPromise = priceSort
+    ? db.propertyOffer.findMany({
+        where: {
+          active: true,
+          purpose: ["sale", "rent", "season"].includes(selectedPurpose || "") ? selectedPurpose! : "sale",
+          property: where,
+        },
+        include: { property: { include: listingInclude } },
+        orderBy: [{ price: { sort: sort === "price-asc" ? "asc" : "desc", nulls: "last" } }, { propertyId: "asc" }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }).then((rows) => rows.map((row) => row.property))
+    : db.property.findMany({
+        where,
+        include: listingInclude,
+        orderBy: [{ featured: "desc" }, { createdAt: "desc" }, { id: "asc" }],
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      });
   const [items, locations, tags, cities, taxonomies] = await Promise.all([
     itemsPromise,
     locationsPromise,
@@ -164,7 +183,7 @@ export async function searchCatalog(params: URLSearchParams) {
     taxonomiesPromise,
   ]);
   return {
-    items: items.map((row) => listingDto(row)),
+    items: items.map((row) => listingDto(row, false, selectedPurpose)),
     total,
     page,
     pages,
@@ -177,7 +196,7 @@ export async function searchCatalog(params: URLSearchParams) {
 }
 export const getListing = cache(async function getListing(slug: string) {
   const row = await db.property.findFirst({
-    where: { slug, status: "published", purpose: { in: ["sale", "rent"] } },
+    where: { slug, status: "published", offers: { some: { active: true } } },
     include: listingInclude,
   });
   return row ? listingDto(row) : null;

@@ -112,21 +112,18 @@ export function MediaUpload({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [progress, setProgress] = useState("");
   return (
     <div>
       <label className={`upload-box ${busy ? "disabled" : ""}`}>
         <Upload size={21} />
         <span>
-          {busy
-            ? "Enviando imagens…"
-            : multiple
-              ? "Adicionar fotos"
-              : "Enviar imagem"}
-          <small>JPG, PNG, WebP ou AVIF · até 8 MB</small>
+          {busy ? progress || "Preparando imagens…" : multiple ? "Adicionar fotos" : "Enviar imagem"}
+          <small>JPG, PNG ou WebP · até 8 MB</small>
         </span>
         <input
           type="file"
-          accept="image/jpeg,image/png,image/webp,image/avif"
+          accept="image/jpeg,image/png,image/webp"
           multiple={multiple}
           disabled={busy}
           onChange={async (e) => {
@@ -134,23 +131,23 @@ export function MediaUpload({
             setBusy(true);
             setError("");
             try {
-              for (const file of files) {
-                if (file.size > 8 * 1024 * 1024)
-                  throw new Error(`${file.name}: tamanho máximo de 8 MB.`);
+              for (const [index, original] of files.entries()) {
+                setProgress(`Enviando ${index + 1} de ${files.length}: ${original.name}`);
+                if (!["image/jpeg", "image/png", "image/webp"].includes(original.type))
+                  throw new Error(`${original.name}: use JPG, PNG ou WebP.`);
+                const file = await prepareImageUpload(original);
                 const form = new FormData();
                 form.set("file", file);
-                const res = await fetch("/api/admin/upload", {
-                  method: "POST",
-                  body: form,
-                });
-                const result = await res.json();
-                if (!res.ok) throw new Error(result.error);
+                const res = await fetch("/api/admin/upload", { method: "POST", body: form });
+                const result = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(result.error || `${original.name}: falha no envio.`);
                 onUploaded(result);
               }
             } catch (err) {
               setError((err as Error).message);
             } finally {
               setBusy(false);
+              setProgress("");
               e.target.value = "";
             }
           }}
@@ -159,6 +156,25 @@ export function MediaUpload({
       <Notice error>{error}</Notice>
     </div>
   );
+}
+
+async function prepareImageUpload(file: File) {
+  if (file.size > 8 * 1024 * 1024)
+    throw new Error(`${file.name}: tamanho máximo de 8 MB.`);
+  const bitmap = await createImageBitmap(file).catch(() => null);
+  if (!bitmap) return file;
+  const scale = Math.min(1, 2400 / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+  canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+  canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  for (const quality of [0.86, 0.76, 0.66]) {
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", quality));
+    if (blob && blob.size <= 4 * 1024 * 1024)
+      return new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), { type: "image/webp" });
+  }
+  throw new Error(`${file.name}: não foi possível otimizar a imagem para envio.`);
 }
 export function Picture({
   src,

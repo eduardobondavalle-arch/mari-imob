@@ -1,12 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  BedDouble,
-  CarFront,
-  Ruler,
-  MapPin,
   Heart,
   MessageCircle,
   Building,
@@ -18,6 +14,8 @@ import {
 import { type Listing, priceLabel } from "@/lib/mari/types";
 import { whatsappLink, hasTradeIn } from "./property";
 import { useMari } from "./provider";
+import { PropertyCharacteristics } from "./property-characteristics";
+import { purposes } from "@/lib/mari/types";
 
 export function SelectionPresentation({
   items,
@@ -29,8 +27,16 @@ export function SelectionPresentation({
   recipientName?: string;
 }) {
   const [selected, setSelected] = useState(items[0]?.id);
+  const [offerPurpose, setOfferPurpose] = useState("");
+  const [origin, setOrigin] = useState("");
   const { content, client, select } = useMari();
   const active = items.find((p) => p.id === selected) || items[0];
+  const activeOffer = active?.offers.find((offer) => offer.active && offer.purpose === (offerPurpose || active.purpose)) || active?.offers.find((offer) => offer.active);
+  const shownActive = active ? { ...active, purpose: activeOffer?.purpose || active.purpose, price: activeOffer?.price ?? active.price } : active;
+  useEffect(() => {
+    const timer = window.setTimeout(() => setOrigin(window.location.origin), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   if (!active) {
     return (
@@ -71,7 +77,7 @@ export function SelectionPresentation({
         </div>
         <a
           className="button cri-btn-contact"
-          href={whatsappLink(brokerPhone, active)}
+          href={whatsappLink(brokerPhone, shownActive, shownActive.purpose, origin)}
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -218,12 +224,15 @@ export function SelectionPresentation({
 
         <div className="cri-price-actions">
           <div className="cri-price-display">
-            <small>{active.purpose === "rent" ? "Locação mensal" : "Valor do imóvel"}</small>
-            <strong>{priceLabel(active.price)}</strong>
+            {active.offers.filter((offer) => offer.active).length > 1 && <div className="offer-selector cri-offer-selector">
+              {active.offers.filter((offer) => offer.active).map((offer) => <button type="button" key={offer.purpose} className={shownActive.purpose === offer.purpose ? "active" : ""} onClick={() => setOfferPurpose(offer.purpose)}>{purposes[offer.purpose]}</button>)}
+            </div>}
+            <small>{shownActive.purpose === "rent" ? "Locação mensal" : "Valor do imóvel"}</small>
+            <strong>{priceLabel(shownActive.price)}</strong>
           </div>
           <a
             className="button cri-btn-interest"
-            href={whatsappLink(brokerPhone, active)}
+            href={whatsappLink(brokerPhone, shownActive, shownActive.purpose, origin)}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -235,36 +244,7 @@ export function SelectionPresentation({
       {/* 6. Especificações do Imóvel */}
       <div className="cri-specs-section">
         <h3>Especificações do imóvel</h3>
-        <div className="cri-specs-grid">
-          {active.area !== null && (
-            <div className="cri-spec-card">
-              <span className="cri-spec-label"><Ruler size={15} /> ÁREA PRIVATIVA</span>
-              <strong>{active.area} m²</strong>
-            </div>
-          )}
-          {active.bedrooms !== null && (
-            <div className="cri-spec-card">
-              <span className="cri-spec-label"><BedDouble size={15} /> DORMITÓRIOS</span>
-              <strong>{active.bedrooms}</strong>
-            </div>
-          )}
-          {active.suites !== null && (
-            <div className="cri-spec-card">
-              <span className="cri-spec-label"><BedDouble size={15} /> SUÍTES</span>
-              <strong>{active.suites}</strong>
-            </div>
-          )}
-          {active.parking !== null && (
-            <div className="cri-spec-card">
-              <span className="cri-spec-label"><CarFront size={15} /> VAGAS DE GARAGEM</span>
-              <strong>{active.parking}</strong>
-            </div>
-          )}
-          <div className="cri-spec-card">
-            <span className="cri-spec-label"><MapPin size={15} /> LOCALIZAÇÃO</span>
-            <strong>{active.neighborhood} · {active.city}</strong>
-          </div>
-        </div>
+        <PropertyCharacteristics property={active} />
       </div>
 
       {/* 7. Sobre o Empreendimento */}
@@ -307,7 +287,7 @@ export function SelectionPresentation({
         </div>
         <a
           className="button cri-cta-btn"
-          href={whatsappLink(brokerPhone, active)}
+          href={whatsappLink(brokerPhone, shownActive, shownActive.purpose, origin)}
           target="_blank"
           rel="noopener noreferrer"
         >

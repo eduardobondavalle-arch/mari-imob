@@ -97,6 +97,7 @@ async function main() {
     update: {},
     create: { kind: "situation", name: "Em construção" },
   });
+  void sitConstrucao;
 
   // 3. Campos personalizados úteis
   const fieldMar = await db.customField.upsert({
@@ -561,6 +562,11 @@ async function main() {
             .map((id) => ({ id: id! })),
         },
       },
+    });
+    await db.propertyOffer.upsert({
+      where: { propertyId_purpose: { propertyId: property.id, purpose: item.purpose } },
+      update: { price: item.price, active: true },
+      create: { propertyId: property.id, purpose: item.purpose, price: item.price, active: true },
     });
 
     // Custom values

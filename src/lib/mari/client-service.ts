@@ -6,10 +6,14 @@ import { createSession, requireSelectionAccess, selectionSession } from "./auth"
 import { identitySchema } from "./validation";
 import { listingDto, listingInclude } from "./catalog";
 import { ensureClientSelection } from "./client-selection";
-async function available(id?: string) {
+async function available(id?: string, purpose?: string | null) {
   if (id)
     assert(
-      await db.property.findFirst({ where: { id, status: "published" } }),
+      await db.property.findFirst({ where: {
+        id,
+        status: "published",
+        ...(purpose ? { offers: { some: { purpose, active: true } } } : {}),
+      } }),
       404,
       "Este imóvel não está mais disponível.",
     );
@@ -31,7 +35,7 @@ export async function clientState() {
     items:
       selection?.items
         .filter((i) => i.property.status === "published")
-        .map((i) => listingDto(i.property)) || [],
+        .map((i) => listingDto(i.property, false, i.purpose)) || [],
   };
 }
 export async function registerSelection(input: unknown, request: Request) {
@@ -51,8 +55,8 @@ export async function registerSelection(input: unknown, request: Request) {
               propertyId: data.propertyId,
             },
           },
-          update: {},
-          create: { selectionId: selection.id, propertyId: data.propertyId },
+          update: { purpose: data.purpose },
+          create: { selectionId: selection.id, propertyId: data.propertyId, purpose: data.purpose },
         });
     });
     return { ok: true };
@@ -69,8 +73,8 @@ export async function registerSelection(input: unknown, request: Request) {
               propertyId: data.propertyId,
             },
           },
-          update: {},
-          create: { selectionId: selection.id, propertyId: data.propertyId },
+          update: { purpose: data.purpose },
+          create: { selectionId: selection.id, propertyId: data.propertyId, purpose: data.purpose },
         });
     });
     await createSession("client", existing.id);
@@ -88,7 +92,7 @@ export async function registerSelection(input: unknown, request: Request) {
     const selection = await ensureClientSelection(created.id, tx);
     if (data.propertyId)
       await tx.selectionItem.create({
-        data: { selectionId: selection.id, propertyId: data.propertyId },
+        data: { selectionId: selection.id, propertyId: data.propertyId, purpose: data.purpose },
       });
     return created;
   });
@@ -107,9 +111,10 @@ export async function recoverSelection(input: unknown, request: Request) {
   await createSession("client", lead.id);
   return { ok: true };
 }
-export async function changeSelection(id: string, remove = false) {
+export async function changeSelection(id: string, remove = false, purpose?: string | null) {
   const access = await requireSelectionAccess();
-  if (!remove) await available(id);
+  assert(!purpose || ["sale", "rent", "season"].includes(purpose), 400, "Finalidade inválida.");
+  if (!remove) await available(id, purpose);
   await db.$transaction(async (tx) => {
     const selection = await ensureClientSelection(access.leadId, tx);
     if (remove)
@@ -121,8 +126,8 @@ export async function changeSelection(id: string, remove = false) {
         where: {
           selectionId_propertyId: { selectionId: selection.id, propertyId: id },
         },
-        update: {},
-        create: { selectionId: selection.id, propertyId: id },
+        update: { purpose },
+        create: { selectionId: selection.id, propertyId: id, purpose },
       });
   });
   return { ok: true };
@@ -141,7 +146,7 @@ export async function sharedSelection(publicToken: string) {
   return selection
     ? {
         title: "Seleção de imóveis",
-        items: selection.items.map((item) => listingDto(item.property)),
+        items: selection.items.map((item) => listingDto(item.property, false, item.purpose)),
       }
     : null;
 }

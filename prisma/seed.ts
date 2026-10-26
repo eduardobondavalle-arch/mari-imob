@@ -35,11 +35,14 @@ async function main() {
     "Abaixo do preço",
     "Exclusividade",
     "Aceita permuta",
+    "Aceita parcelamento",
     "Oportunidade",
     "Frente mar",
   ])
-    if(name !== "Aceita permuta" || !(await db.tag.findUnique({ where: { key: "trade_in" } })))
-      await db.tag.upsert({ where: { name }, update: name === "Aceita permuta" ? { key: "trade_in" } : {}, create: { name, ...(name === "Aceita permuta" ? { key: "trade_in" } : {}) } });
+    if(name !== "Aceita permuta" || !(await db.tag.findUnique({ where: { key: "trade_in" } }))) {
+      const key = name === "Aceita permuta" ? "trade_in" : name === "Aceita parcelamento" ? "installment" : undefined;
+      await db.tag.upsert({ where: { name }, update: key ? { key } : {}, create: { name, ...(key ? { key } : {}) } });
+    }
   for (const [kind, names] of [
     ["category", ["Residencial", "Comercial", "Terreno"]],
     ["situation", ["Pronto para morar", "Em construção", "Lançamento"]],

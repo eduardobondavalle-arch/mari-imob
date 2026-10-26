@@ -50,6 +50,7 @@ async function main() {
         where: { status: "published" },
         include: {
           images: true,
+          offers: true,
           tags: true,
           values: { where: { field: { public: true, archived: false } } },
         },
@@ -116,6 +117,7 @@ async function main() {
           }
           for (const {
             images: _images,
+            offers,
             tags: propertyTags,
             values,
             ...property
@@ -126,6 +128,7 @@ async function main() {
                 ...property,
                 privateAddress: "",
                 tags: { connect: propertyTags.map((t) => ({ id: t.id })) },
+                offers: { create: offers.map(({ purpose, price, active }) => ({ purpose, price, active })) },
               },
             });
             for (const value of values)

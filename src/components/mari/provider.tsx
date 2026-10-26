@@ -91,7 +91,7 @@ export function MariProvider({
     }
     try {
       await api(
-        `selection/${property.id}`,
+        `selection/${property.id}?purpose=${property.purpose}`,
         {},
         client.items.some((i) => i.id === property.id) ? "DELETE" : "POST",
       );
@@ -200,6 +200,7 @@ function IdentityFlow({
           phone: normalizePhone(phone),
           consent,
           propertyId: intent.property?.id,
+          purpose: intent.property?.purpose,
           message,
         });
         setSuccess(true);
@@ -217,6 +218,7 @@ function IdentityFlow({
           phone: normalizePhone(phone),
           consent,
           propertyId: intent.property?.id,
+          purpose: intent.property?.purpose,
         });
       }
       await onComplete();

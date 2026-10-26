@@ -1,5 +1,5 @@
 import { config } from "dotenv";
-import { copyFile, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -29,7 +29,7 @@ async function upload(key: string) {
 }
 
 async function main() {
-  const properties = await source.property.findMany({ where: { status: "published" }, include: { images: true, tags: true, values: { where: { field: { public: true, archived: false } } } } });
+  const properties = await source.property.findMany({ where: { status: "published" }, include: { images: true, offers: true, tags: true, values: { where: { field: { public: true, archived: false } } } } });
   const tags = await source.tag.findMany();
   const taxonomies = await source.taxonomy.findMany();
   const cities = await source.city.findMany();
@@ -56,8 +56,9 @@ async function main() {
       for (const option of options) await tx.fieldOption.upsert({ where: { id: option.id }, create: option, update: option });
     }
     await tx.siteSettings.update({ where: { id: "main" }, data: { published: content } });
-    for (const { images: _images, tags: propertyTags, values, ...property } of properties) {
-      await tx.property.create({ data: { ...property, privateAddress: "", tags: { connect: propertyTags.map((tag) => ({ id: tag.id })) } } });
+    for (const { images: _images, offers, tags: propertyTags, values, ...property } of properties) {
+      void _images;
+      await tx.property.create({ data: { ...property, privateAddress: "", tags: { connect: propertyTags.map((tag) => ({ id: tag.id })) }, offers: { create: offers.map(({ purpose, price, active }) => ({ purpose, price, active })) } } });
       for (const value of values) await tx.propertyValue.create({ data: { ...value, value: value.value! } });
     }
     for (const media of allMedia) await tx.media.create({ data: { ...media, propertyId: properties.some((property) => property.id === media.propertyId) ? media.propertyId : null } });

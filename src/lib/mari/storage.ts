@@ -86,9 +86,9 @@ export async function uploadMedia(request: Request) {
       limitInputPixels: 40000000,
     }).metadata();
     assert(
-      ["jpeg", "png", "webp", "avif"].includes(metadata.format || ""),
+      ["jpeg", "png", "webp"].includes(metadata.format || ""),
       400,
-      "Use JPG, PNG, WebP ou AVIF.",
+      "Use JPG, PNG ou WebP.",
     );
     encoded = await sharp(input, { limitInputPixels: 40000000 })
       .rotate()
@@ -99,7 +99,7 @@ export async function uploadMedia(request: Request) {
     assert(
       false,
       400,
-      "Arquivo inválido. Use JPG, PNG, WebP ou AVIF de até 40 megapixels.",
+      "Arquivo inválido. Use JPG, PNG ou WebP de até 40 megapixels.",
     );
   }
   const key = `${randomUUID()}.webp`;
@@ -137,6 +137,9 @@ export async function uploadMedia(request: Request) {
       height: encoded.info.height,
       size: encoded.info.size,
     },
+  }).catch(async (error) => {
+    await deleteStoredKey(key).catch(() => undefined);
+    throw error;
   });
   return { ...media, url: `/media/${key}` };
 }
@@ -205,21 +208,25 @@ export async function deleteMedia(id: string) {
     409,
     "Esta imagem está em uso no site ou no rascunho.",
   );
+  await deleteStoredKey(row.key);
+  await db.media.delete({ where: { id } });
+  return { ok: true };
+}
+
+async function deleteStoredKey(key: string) {
   if (process.env.STORAGE_PROVIDER === "supabase") {
     const storage = supabaseStorage();
-    const response = await fetch(storage.objectUrl(row.key), {
+    const response = await fetch(storage.objectUrl(key), {
       method: "DELETE",
       headers: storage.headers,
     });
     if (response.status !== 404) await assertStorageResponse(response);
   } else if (process.env.STORAGE_PROVIDER === "s3")
     await s3().send(
-      new DeleteObjectCommand({ Bucket: process.env.S3_BUCKET, Key: row.key }),
+      new DeleteObjectCommand({ Bucket: process.env.S3_BUCKET, Key: key }),
     );
   else
-    await unlink(resolve(storageRoot(), row.key)).catch((e) => {
+    await unlink(resolve(storageRoot(), key)).catch((e) => {
       if (e.code !== "ENOENT") throw e;
     });
-  await db.media.delete({ where: { id } });
-  return { ok: true };
 }

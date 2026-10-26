@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ArrowLeft, ArrowRight, Trash2, Star } from "lucide-react";
 import { api, Busy, MediaUpload, Notice } from "./ui";
@@ -21,6 +21,7 @@ const blank: FormValue = {
   featured: false,
   superFeatured: false,
   price: null,
+  offers: [{ purpose: "sale", price: null, active: true }],
   condominiumFee: null,
   condominiumPeriod: null,
   iptuFee: null,
@@ -62,6 +63,9 @@ export function PropertyEditor({
           ...blank,
           ...property,
           purpose: property.purpose as FormValue["purpose"],
+          offers: property.offers.length
+            ? property.offers
+            : [{ purpose: property.purpose as "sale" | "rent" | "season", price: property.price, active: true }],
           status: property.status as FormValue["status"],
           privateAddress: property.privateAddress || "",
           tagIds: property.tags.map((t) => t.id),
@@ -76,6 +80,7 @@ export function PropertyEditor({
   const [config, setConfig] = useState<SettingsData | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const newImageIds = useRef(new Set<string>());
   useEffect(() => {
     api<SettingsData>("admin/settings")
       .then(setConfig)
@@ -84,6 +89,20 @@ export function PropertyEditor({
   function set<K extends keyof FormValue>(key: K, value: FormValue[K]) {
     setData((d) => ({ ...d, [key]: value }));
   }
+  function toggleOffer(purpose: "sale" | "rent" | "season", enabled: boolean) {
+    const current = data.offers || [];
+    const offers = enabled
+      ? current.some((offer) => offer.purpose === purpose)
+        ? current.map((offer) => offer.purpose === purpose ? { ...offer, active: true } : offer)
+        : [...current, { purpose, price: null, active: true }]
+      : current.filter((offer) => offer.purpose !== purpose);
+    if (offers.length) set("offers", offers);
+  }
+  function setOfferPrice(purpose: "sale" | "rent" | "season", price: number | null) {
+    set("offers", (data.offers || []).map((offer) =>
+      offer.purpose === purpose ? { ...offer, price } : offer,
+    ));
+  }
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -91,6 +110,8 @@ export function PropertyEditor({
     try {
       const payload = propertySchema.parse({
         ...data,
+        purpose: data.offers?.[0]?.purpose || data.purpose,
+        price: data.offers?.[0]?.price ?? null,
         imageIds: images.map((i) => i.id),
       });
       await api(
@@ -98,6 +119,7 @@ export function PropertyEditor({
         payload,
         property ? "PUT" : "POST",
       );
+      newImageIds.current.clear();
       for (const original of property?.images || [])
         if (!images.some((i) => i.id === original.id))
           await api(`admin/media/${original.id}`, {}, "DELETE");
@@ -107,6 +129,18 @@ export function PropertyEditor({
     } finally {
       setBusy(false);
     }
+  }
+  async function cancelEditor() {
+    setBusy(true);
+    await Promise.allSettled([...newImageIds.current].map((id) => api(`admin/media/${id}`, {}, "DELETE")));
+    newImageIds.current.clear();
+    setBusy(false);
+    onCancel();
+  }
+  async function removeImage(image: (typeof images)[number]) {
+    setImages((items) => items.filter((item) => item.id !== image.id));
+    if (newImageIds.current.delete(image.id))
+      await api(`admin/media/${image.id}`, {}, "DELETE").catch((err) => setError((err as Error).message));
   }
   function move(index: number, step: number) {
     setImages((items) => {
@@ -126,7 +160,7 @@ export function PropertyEditor({
     );
   return (
     <form onSubmit={submit} className="property-editor">
-      <button type="button" className="back-link" onClick={onCancel}>
+      <button type="button" className="back-link" onClick={cancelEditor} disabled={busy}>
         <ArrowLeft size={16} /> Voltar ao catálogo
       </button>
       <section className="admin-card">
@@ -150,22 +184,20 @@ export function PropertyEditor({
               onChange={(e) => set("headline", e.target.value)}
             />
           </label>
-          <label>
-            Finalidade
-            <select
-              value={data.purpose}
-              onChange={(e) =>
-                set("purpose", e.target.value as FormValue["purpose"])
-              }
-            >
-              {Object.entries(purposes).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label>
+          <fieldset className="span-2">
+            <legend>Finalidades</legend>
+            <div className="checkbox-group">
+              {Object.entries(purposes).map(([value, label]) => {
+                const purpose = value as "sale" | "rent" | "season";
+                return (
+                  <label className="check-line" key={value}>
+                    <input type="checkbox" checked={(data.offers || []).some((offer) => offer.purpose === purpose)} onChange={(e) => toggleOffer(purpose, e.target.checked)} />
+                    {label}
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>          <label>
             Tipo do imóvel
             <input
               required
@@ -213,23 +245,12 @@ export function PropertyEditor({
                 ))}
             </select>
           </label>
-          <label>
-            Valor do anúncio (R$)
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={data.price ?? ""}
-              placeholder="Vazio = sob consulta"
-              onChange={(e) =>
-                set(
-                  "price",
-                  e.target.value === "" ? null : Number(e.target.value),
-                )
-              }
-            />
-          </label>
-          <label>
+          {(data.offers || []).map((offer) => (
+            <label key={offer.purpose}>
+              Valor — {purposes[offer.purpose]} (R$)
+              <input type="number" min="0" step="0.01" value={offer.price ?? ""} placeholder="Vazio = sob consulta" onChange={(e) => setOfferPrice(offer.purpose, e.target.value === "" ? null : Number(e.target.value))} />
+            </label>
+          ))}          <label>
             Status
             <select
               value={data.status}
@@ -258,7 +279,7 @@ export function PropertyEditor({
           </label>
         </div>
       </section>
-      {data.purpose === "rent" && <section className="admin-card">
+      {(data.offers || []).some((offer) => offer.purpose === "rent" || offer.purpose === "season") && <section className="admin-card">
         <h2>Despesas da locação</h2>
         <div className="form-grid">
           {([['condominiumFee','condominiumPeriod','Condomínio'],['iptuFee','iptuPeriod','IPTU'],['trashFee','trashPeriod','Taxa de lixo'],['otherFees','otherFeesPeriod','Outras taxas']] as const).map(([valueKey, periodKey, label]) => <div className="expense-field" key={valueKey}><label>{label}<input type="number" min="0" step="0.01" value={data[valueKey] ?? ""} onChange={(e)=>set(valueKey,e.target.value===""?null:Number(e.target.value))}/></label><label>Periodicidade<select value={data[periodKey] || ""} onChange={(e)=>set(periodKey,(e.target.value || null) as FormValue[typeof periodKey])}><option value="">Não informada</option><option value="monthly">Mensal</option><option value="annual">Anual</option></select></label></div>)}
@@ -397,6 +418,7 @@ export function PropertyEditor({
                     <Star size={13} /> Principal
                   </span>
                 )}
+                {index > 0 && <button className="text-button" type="button" onClick={() => setImages((items) => [image, ...items.filter((item) => item.id !== image.id)])}>Definir como principal</button>}
                 <button
                   className="icon-button"
                   type="button"
@@ -419,9 +441,7 @@ export function PropertyEditor({
                   type="button"
                   className="icon-button danger-text"
                   aria-label={`Remover foto ${index + 1}`}
-                  onClick={() =>
-                    setImages((items) => items.filter((i) => i.id !== image.id))
-                  }
+                  onClick={() => removeImage(image)}
                 >
                   <Trash2 size={16} />
                 </button>
@@ -431,7 +451,10 @@ export function PropertyEditor({
         </div>
         <MediaUpload
           multiple
-          onUploaded={(image) => setImages((items) => [...items, image])}
+          onUploaded={(image) => {
+            newImageIds.current.add(image.id);
+            setImages((items) => items.some((item) => item.id === image.id) ? items : [...items, image]);
+          }}
         />
       </section>
       {config.fields.length > 0 && (
@@ -457,7 +480,7 @@ export function PropertyEditor({
       <div className="editor-save-bar">
         <Notice error>{error}</Notice>
         <div className="button-row">
-          <button type="button" className="button secondary" onClick={onCancel}>
+          <button type="button" className="button secondary" onClick={cancelEditor} disabled={busy}>
             Cancelar
           </button>
           <button className="button" disabled={busy}>

@@ -9,6 +9,14 @@ import { listingDto, listingInclude } from "./catalog";
 import { defaultContent } from "./defaults";
 export async function saveProperty(input: unknown, id?: string) {
   const data = propertySchema.parse(input);
+  const offers = data.offers?.length
+    ? data.offers
+    : [{ purpose: data.purpose, price: data.price, active: true }];
+  assert(
+    new Set(offers.map((offer) => offer.purpose)).size === offers.length,
+    400,
+    "Não repita uma finalidade.",
+  );
   assert(
     new Set(data.imageIds).size === data.imageIds.length,
     400,
@@ -82,8 +90,13 @@ export async function saveProperty(input: unknown, id?: string) {
     imageIds,
     tagIds,
     customValues: _customValues,
+    offers: _offers,
     ...propertyData
   } = data;
+  const primaryOffer = offers.find((offer) => offer.active) || offers[0];
+  void _offers;
+  propertyData.purpose = primaryOffer.purpose;
+  propertyData.price = primaryOffer.price;
   const municipality = await db.city.findFirst({
     where: { name: { equals: data.city, mode: "insensitive" } },
   });
@@ -151,6 +164,28 @@ export async function saveProperty(input: unknown, id?: string) {
         await tx.media.update({
           where: { id: imageId },
           data: { propertyId: row.id, position },
+        });
+      await tx.propertyOffer.deleteMany({
+        where: {
+          propertyId: row.id,
+          purpose: { notIn: offers.map((offer) => offer.purpose) },
+        },
+      });
+      for (const offer of offers)
+        await tx.propertyOffer.upsert({
+          where: {
+            propertyId_purpose: {
+              propertyId: row.id,
+              purpose: offer.purpose,
+            },
+          },
+          update: { price: offer.price, active: offer.active },
+          create: {
+            propertyId: row.id,
+            purpose: offer.purpose,
+            price: offer.price,
+            active: offer.active,
+          },
         });
       await tx.propertyValue.deleteMany({
         where: { propertyId: row.id, fieldId: { in: fields.map((f) => f.id) } },

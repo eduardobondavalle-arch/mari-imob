@@ -43,7 +43,7 @@ test("jornada real: cadastro sem SMS, fotos, filtros, seleção, CRM e editor", 
     await page.getByLabel("Bairro", { exact: true }).fill("Bairro de teste");
     await page.getByLabel("Descrição do anúncio").fill("Registro temporário criado exclusivamente pelo teste automatizado. Será removido ao concluir.");
     await page.getByLabel("Endereço completo (somente administração)").fill("ENDERECO-PRIVADO-NAO-EXIBIR");
-    await page.getByLabel("Valor do anúncio (R$)").fill("2500000");
+    await page.getByLabel("Valor — Comprar (R$)").fill("2500000");
     await page.getByRole("combobox", { name: "Status", exact: true }).selectOption("published");
     await page.getByLabel("Destacar na página inicial").check();
     await page.getByRole("combobox", { name: `Vista de teste ${unique}`, exact: true }).selectOption("true");

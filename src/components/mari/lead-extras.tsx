@@ -308,7 +308,7 @@ function SelectionEditor({
   const visible = properties.filter(
     (p) =>
       (!city || p.city === city) &&
-      (!purpose || p.purpose === purpose) &&
+      (!purpose || p.offers.some((offer) => offer.active && offer.purpose === purpose)) &&
       `${p.title} ${p.code} ${p.neighborhood}`
         .toLocaleLowerCase("pt-BR")
         .includes(q.toLocaleLowerCase("pt-BR")),
@@ -408,7 +408,7 @@ function SelectionEditor({
               <span>
                 <strong>{p.title}</strong>
                 <small>
-                  {p.code} · {p.city} · {priceLabel(p.price)}
+                  {p.code} · {p.city} · {priceLabel(p.offers.find((offer) => offer.active && offer.purpose === purpose)?.price ?? p.price)}
                 </small>
               </span>
             </label>

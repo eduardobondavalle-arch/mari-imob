@@ -18,6 +18,7 @@ import { PropertyGallery } from "@/components/gallery";
 import { type Listing, purposes, priceLabel } from "@/lib/mari/types";
 import { useMari } from "./provider";
 import { Modal, Notice } from "./ui";
+import { PropertyCharacteristics } from "./property-characteristics";
 
 export function isTradeInTag(t: { id?: string; key?: string | null; name?: string }) {
   return t.key === "trade_in" || Boolean(t.name && t.name.toLowerCase().includes("permuta"));
@@ -27,11 +28,13 @@ export function hasTradeIn(tags?: { id?: string; key?: string | null; name?: str
   return Boolean(tags?.some(isTradeInTag));
 }
 
-export function whatsappLink(phone: string, property?: Listing) {
-  const origin = typeof window === "undefined" ? "" : window.location.origin;
-  return `https://wa.me/${phone}?text=${encodeURIComponent(property ? `Olá, Mari! Tenho interesse no imóvel ${property.title}, referência ${property.code}. Gostaria de receber mais informações. ${origin}/imovel/${property.slug}` : "Olá, Mari! Gostaria de conversar sobre imóveis no litoral.")}`;
-}
-function RentalCosts({ property }: { property: Listing }) {
+export function whatsappLink(phone: string, property?: Listing, purpose = property?.purpose, origin = "") {
+  const context = purpose === "rent" ? "para locação" : purpose === "season" ? "para temporada" : "para compra";
+  const message = property
+    ? `Olá, Mari! Tenho interesse no imóvel ${property.title}, referência ${property.code}, ${context}. Gostaria de receber mais informações. ${origin}/imovel/${property.slug}?purpose=${purpose}`
+    : "Olá, Mari! Gostaria de conversar sobre imóveis no litoral.";
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+}function RentalCosts({ property }: { property: Listing }) {
   const rows = [
     ["Condomínio", property.condominiumFee, property.condominiumPeriod],
     ["IPTU", property.iptuFee, property.iptuPeriod],
@@ -218,6 +221,21 @@ export function PropertyDetail({
 }) {
   const { content, client, select, contact } = useMari();
   const [copied, setCopied] = useState("");
+  const [origin, setOrigin] = useState("");
+  const availableOffers = p.offers.filter((offer) => offer.active);
+  const [selectedPurpose, setSelectedPurpose] = useState(p.purpose);
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get("purpose");
+    if (!requested || !p.offers.some((offer) => offer.active && offer.purpose === requested)) return;
+    const timer = window.setTimeout(() => setSelectedPurpose(requested), 0);
+    return () => window.clearTimeout(timer);
+  }, [p.offers]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => setOrigin(window.location.origin), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
+  const selectedOffer = availableOffers.find((offer) => offer.purpose === selectedPurpose) || availableOffers[0];
+  const activeProperty = { ...p, purpose: selectedOffer?.purpose || p.purpose, price: selectedOffer?.price ?? p.price };
   return (
     <div className="property-detail">
       {standalone && (
@@ -240,7 +258,7 @@ export function PropertyDetail({
       <div className="detail-grid">
         <div>
           <p className="eyebrow">
-            {p.type} · {purposes[p.purpose]} · Ref. {p.code}
+            {p.type} · {purposes[activeProperty.purpose]} · Ref. {p.code}
           </p>
           <h1>{p.title}</h1>
           {p.headline && <p className="detail-headline">{p.headline}</p>}
@@ -271,41 +289,7 @@ export function PropertyDetail({
           </div>
           <h2>Um pouco mais sobre este lugar</h2>
           <p className="pre-line">{p.description}</p>
-          <dl className="characteristics">
-            {p.bathrooms != null && <div><dt>Banheiros</dt><dd>{p.bathrooms}</dd></div>}
-            {p.suites !== null && (
-              <div>
-                <dt>Suítes</dt>
-                <dd>{p.suites}</dd>
-              </div>
-            )}
-            {p.category && (
-              <div>
-                <dt>Categoria</dt>
-                <dd>{p.category.name}</dd>
-              </div>
-            )}
-            {p.situation && (
-              <div>
-                <dt>Situação</dt>
-                <dd>{p.situation.name}</dd>
-              </div>
-            )}
-            {p.values.map((v) => (
-              <div key={v.fieldId}>
-                <dt>{v.field.label}</dt>
-                <dd>
-                  {typeof v.value === "boolean"
-                    ? v.value
-                      ? "Sim"
-                      : "Não"
-                    : Array.isArray(v.value)
-                      ? v.value.join(", ")
-                      : String(v.value)}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          <PropertyCharacteristics property={p} />
           {p.videoUrl && (
             <a
               className="button secondary"
@@ -318,24 +302,27 @@ export function PropertyDetail({
           )}
         </div>
         <aside className="price-panel">
+          {availableOffers.length > 1 && <div className="offer-selector" role="group" aria-label="Finalidade do imóvel">
+            {availableOffers.map((offer) => <button type="button" key={offer.purpose} className={activeProperty.purpose === offer.purpose ? "active" : ""} onClick={() => setSelectedPurpose(offer.purpose)}>{purposes[offer.purpose]}</button>)}
+          </div>}
           <p className="eyebrow">
-            {p.purpose === "rent" ? "Valor mensal" : "Valor anunciado"}
+            {activeProperty.purpose === "rent" ? "Valor mensal" : activeProperty.purpose === "season" ? "Valor da temporada" : "Valor anunciado"}
           </p>
-          <strong className="detail-price">{priceLabel(p.price)}</strong>
-          {p.purpose === "rent" && <RentalCosts property={p}/>}
+          <strong className="detail-price">{priceLabel(activeProperty.price)}</strong>
+          {(activeProperty.purpose === "rent" || activeProperty.purpose === "season") && <RentalCosts property={activeProperty}/>}
           <p>Converse com a Mari sobre condições e disponibilidade.</p>
           <a
             className="button full"
-            href={whatsappLink(content.whatsapp, p)}
+            href={whatsappLink(content.whatsapp, activeProperty, activeProperty.purpose, origin)}
             target="_blank"
             rel="noopener noreferrer"
           >
             Conversar no WhatsApp <ArrowUpRight size={16} />
           </a>
-          <button className="button secondary full" onClick={() => contact(p)}>
+          <button className="button secondary full" onClick={() => contact(activeProperty)}>
             Solicitar contato
           </button>
-          <button className="text-button" onClick={() => select(p)}>
+          <button className="text-button" onClick={() => select(activeProperty)}>
             <Heart size={17} />
             {client?.items.some((i) => i.id === p.id)
               ? "Remover da seleção"
@@ -346,7 +333,7 @@ export function PropertyDetail({
             onClick={async () => {
               try {
                 await navigator.clipboard.writeText(
-                  `${location.origin}/imovel/${p.slug}`,
+                  `${location.origin}/imovel/${p.slug}?purpose=${activeProperty.purpose}`,
                 );
                 setCopied("Link copiado.");
               } catch {

@@ -336,7 +336,7 @@ async function handle(request: Request, context: Context) {
       segments[1] &&
       ["POST", "DELETE"].includes(method)
     )
-      result = await changeSelection(segments[1], method === "DELETE");
+      result = await changeSelection(segments[1], method === "DELETE", url.searchParams.get("purpose"));
     else if (segments[0] === "shared" && segments[1] && method === "GET") {
       result = await sharedSelection(segments[1]);
       assert(result, 404, "Seleção não encontrada.");
