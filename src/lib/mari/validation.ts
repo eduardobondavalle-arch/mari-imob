@@ -119,6 +119,9 @@ export const propertySchema = z.object({
   bathrooms: optionalNumber.refine((v) => v === null || Number.isInteger(v)).default(null),
   parking: optionalNumber.refine((v) => v === null || Number.isInteger(v)),
   area: optionalNumber,
+  builtArea: optionalNumber.default(null),
+  landArea: optionalNumber.default(null),
+  condominiumId: z.string().nullable().default(null),
   categoryId: z.string().nullable().default(null),
   situationId: z.string().nullable().default(null),
   tagIds: z.array(z.string()).max(30),
@@ -133,6 +136,19 @@ export const propertySchema = z.object({
       z.null(),
     ]),
   ),
+});
+export const condominiumSchema = z.object({
+  name: z.string().trim().min(2).max(140),
+  city: z.string().trim().min(2).max(100),
+  neighborhood: z.string().trim().min(2).max(100),
+  street: z.string().trim().min(2).max(180),
+  number: z.string().trim().min(1).max(30),
+  complement: z.string().trim().max(120).default(""),
+  postalCode: z.string().trim().max(12).default("").refine((value) => !value || /^\d{5}-?\d{3}$/.test(value), "Informe um CEP válido."),
+  description: z.string().trim().max(10000).default(""),
+  amenities: z.array(z.string().trim().min(2).max(80)).max(100),
+  imageIds: z.array(z.string()).max(60),
+  archived: z.boolean().default(false),
 });
 export const fieldSchema = z
   .object({

@@ -62,6 +62,7 @@ import {
   saveNews,
   deleteNews,
 } from "@/lib/mari/news-service";
+import { archiveCondominium, condominiums, saveCondominium } from "@/lib/mari/condominium-service";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 type Context = { params: Promise<{ path: string[] }> };
@@ -211,6 +212,14 @@ async function handle(request: Request, context: Context) {
       result = await dashboard();
     else if (path === "admin/settings" && method === "GET")
       result = await settingsData();
+    else if (segments[0] === "admin" && segments[1] === "condominiums") {
+      if (method === "GET") result = await condominiums(url.searchParams);
+      else if (method === "POST" || method === "PUT")
+        result = await saveCondominium(await readJson(request), id);
+      else if (method === "DELETE" && id)
+        result = await archiveCondominium(id, url.searchParams.get("unlink") === "true");
+      else assert(false, 405, "Operação inválida.");
+    }
     else if (path === "admin/content" && method === "POST")
       result = await saveContent(await readJson(request));
     else if (segments[1] === "properties" && segments[0] === "admin") {

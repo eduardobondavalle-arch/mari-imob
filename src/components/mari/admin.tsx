@@ -36,9 +36,11 @@ import { LeadExtras } from "./lead-extras";
 import { OwnerSubmissionsAdmin } from "./owner-submissions-admin";
 import { NewsAdmin } from "./news-admin";
 import { FunnelAdmin } from "./funnel-admin";
+import { CondominiumAdmin } from "./condominium-admin";
 const tabs = [
   { id: "overview", label: "Visão geral", Icon: LayoutDashboard },
   { id: "properties", label: "Imóveis", Icon: Building2 },
+  { id: "condominiums", label: "Condomínios", Icon: Building2 },
   { id: "leads", label: "Interessados", Icon: Users },
   { id: "funnel", label: "Funil", Icon: LayoutDashboard },
   { id: "owners", label: "Captações", Icon: Building2 },
@@ -516,6 +518,7 @@ export function AdminPanel({
                   </>
                 ))}
               {tab === "leads" && <CrmBoard onOpen={id => action(async () => setLead(await api<LeadDetail>(`admin/leads/${id}`)))}/>}
+              {tab === "condominiums" && <CondominiumAdmin />}
               {tab === "funnel" && <FunnelAdmin />}
               {tab === "owners" && <OwnerSubmissionsAdmin />}
               {tab === "agenda" && <Agenda/>}

@@ -212,6 +212,19 @@ function Features({ property: p }: { property: Listing }) {
     </div>
   );
 }
+function CondominiumDetails({ property }: { property: Listing }) {
+  const condominium = property.condominium;
+  if (!condominium) return null;
+  return <section className="property-condominium" aria-labelledby="condominium-title">
+    <p className="eyebrow">CONDOMÍNIO / EMPREENDIMENTO</p>
+    <h2 id="condominium-title">Sobre o condomínio</h2>
+    <h3>{condominium.name}</h3>
+    <p className="location"><MapPin size={16}/>{condominium.neighborhood}, {condominium.city}</p>
+    {condominium.description && <p className="pre-line">{condominium.description}</p>}
+    {condominium.amenities.length > 0 && <div className="condominium-amenities" aria-label="Estrutura do condomínio">{condominium.amenities.map((amenity) => <span key={amenity}><Building2 size={15}/>{amenity}</span>)}</div>}
+    {condominium.images.length > 0 && <div className="condominium-gallery">{condominium.images.map((image) => <Image key={image.id} src={`/media/${image.key}`} unoptimized width={480} height={320} alt={image.alt || `${condominium.name} - área comum`}/>)}</div>}
+  </section>;
+}
 export function PropertyDetail({
   property: p,
   standalone = false,
@@ -290,6 +303,7 @@ export function PropertyDetail({
           <h2>Um pouco mais sobre este lugar</h2>
           <p className="pre-line">{p.description}</p>
           <PropertyCharacteristics property={p} />
+          <CondominiumDetails property={p} />
           {p.videoUrl && (
             <a
               className="button secondary"

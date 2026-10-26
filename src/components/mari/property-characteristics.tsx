@@ -24,11 +24,13 @@ function iconFor(label: string) {
 
 export function PropertyCharacteristics({ property: p }: { property: Listing }) {
   const items = [
-    { label: "Área privativa", value: p.area == null ? null : `${p.area} m²`, Icon: Ruler },
     { label: "Quartos", value: p.bedrooms, Icon: BedDouble },
     { label: "Suítes", value: p.suites, Icon: BedDouble },
     { label: "Banheiros", value: p.bathrooms, Icon: Bath },
     { label: "Vagas", value: p.parking, Icon: CarFront },
+    { label: "Área privativa", value: p.area == null ? null : `${p.area} m²`, Icon: Ruler },
+    { label: "Área construída", value: p.builtArea == null ? null : `${p.builtArea} m²`, Icon: Ruler },
+    { label: "Terreno", value: p.landArea == null ? null : `${p.landArea} m²`, Icon: Ruler },
     { label: "Categoria", value: p.category?.name, Icon: Building2 },
     { label: "Situação", value: p.situation?.name, Icon: Building2 },
     ...p.values.map((entry) => ({ label: entry.field.label, value: entry.value, Icon: iconFor(entry.field.label) })),
@@ -36,8 +38,8 @@ export function PropertyCharacteristics({ property: p }: { property: Listing }) 
   if (!items.length) return null;
   return <div className="property-characteristics" aria-label="Características do imóvel">
     {items.map(({ label, value, Icon }, index) => <div className="property-characteristic" key={`${label}-${index}`}>
-      <span className="property-characteristic-icon"><Icon size={20} aria-hidden="true" /></span>
-      <span><small>{label}</small><strong>{valueLabel(value)}</strong></span>
+      <Icon size={19} aria-hidden="true" />
+      <span><strong>{valueLabel(value)}</strong> <small>{label}</small></span>
     </div>)}
   </div>;
 }

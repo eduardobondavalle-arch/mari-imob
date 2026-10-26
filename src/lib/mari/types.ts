@@ -51,6 +51,10 @@ export type Listing = {
   bathrooms?: number | null;
   parking: number | null;
   area: number | null;
+  builtArea: number | null;
+  landArea: number | null;
+  condominiumId: string | null;
+  condominium: CondominiumSummary | null;
   categoryId: string | null;
   situationId: string | null;
   category: { id: string; name: string } | null;
@@ -65,6 +69,24 @@ export type Listing = {
   }[];
   tags: { id: string; name: string; key?: string | null }[];
   values: { fieldId: string; value: unknown; field: Field }[];
+};
+export type MediaItem = {
+  id: string; key: string; alt: string; width: number; height: number; position: number;
+};
+export type CondominiumSummary = {
+  id: string;
+  name: string;
+  city: string;
+  neighborhood: string;
+  street: string;
+  number: string;
+  complement: string;
+  postalCode: string;
+  description: string;
+  amenities: string[];
+  archived: boolean;
+  images: MediaItem[];
+  propertyCount?: number;
 };
 export type PropertyPurpose = "sale" | "rent" | "season";
 export type PropertyOffer = {

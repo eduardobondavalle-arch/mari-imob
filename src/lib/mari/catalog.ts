@@ -13,6 +13,7 @@ export const listingInclude = {
   category: true,
   situation: true,
   values: { include: { field: { include: { options: true } } } },
+  condominium: { include: { images: { orderBy: { position: "asc" as const } } } },
 } satisfies Prisma.PropertyInclude;
 type DbListing = Prisma.PropertyGetPayload<{ include: typeof listingInclude }>;
 export function listingDto(row: DbListing, admin = false, requestedPurpose?: string | null): Listing {
@@ -60,6 +61,14 @@ export function listingDto(row: DbListing, admin = false, requestedPurpose?: str
     bathrooms: row.bathrooms,
     parking: row.parking,
     area: row.area,
+    builtArea: row.builtArea,
+    landArea: row.landArea,
+    condominiumId: row.condominiumId,
+    condominium: row.condominium ? {
+      ...row.condominium,
+      amenities: Array.isArray(row.condominium.amenities) ? row.condominium.amenities as string[] : [],
+      images: row.condominium.images.map(({ id, key, alt, width, height, position }) => ({ id, key, alt, width, height, position })),
+    } : null,
     categoryId: row.categoryId,
     situationId: row.situationId,
     category: row.category,

@@ -86,6 +86,12 @@ export async function saveProperty(input: unknown, id?: string) {
         400,
         "Categoria ou situação inválida.",
       );
+  if (data.condominiumId)
+    assert(
+      await db.condominium.findFirst({ where: { id: data.condominiumId, archived: false } }),
+      400,
+      "Condomínio indisponível.",
+    );
   const {
     imageIds,
     tagIds,
@@ -124,7 +130,7 @@ export async function saveProperty(input: unknown, id?: string) {
       });
       assert(
         images.length === imageIds.length &&
-          images.every((i) => !i.propertyId || i.propertyId === id),
+          images.every((i) => (!i.propertyId || i.propertyId === id) && !i.condominiumId && !i.ownerSubmissionId),
         400,
         "Uma imagem não está disponível para este imóvel.",
       );

@@ -123,6 +123,10 @@ model Property {
   bathrooms    Int?
   parking      Int?
   area         Float?
+  builtArea    Float?
+  landArea     Float?
+  condominiumId String?
+  condominium Condominium?    @relation(fields: [condominiumId], references: [id], onDelete: SetNull)
   categoryId   String?
   situationId  String?
   category     Taxonomy?        @relation("category", fields: [categoryId], references: [id], onDelete: SetNull)
@@ -141,6 +145,7 @@ model Property {
   @@index([city, neighborhood, type])
   @@index([price])
   @@index([cityId])
+  @@index([condominiumId])
   @@index([status, purpose, featured(sort: Desc), createdAt(sort: Desc), id], map: "Property_status_purpose_featured_createdAt_id_idx")
   @@index([status, purpose, superFeatured, updatedAt(sort: Desc)], map: "Property_status_purpose_superFeatured_updatedAt_idx")
   @@index([status, purpose, price, id], map: "Property_status_purpose_price_id_idx")
@@ -169,11 +174,36 @@ model Media {
   position   Int       @default(0)
   propertyId String?
   property   Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  condominiumId String?
+  condominium Condominium? @relation(fields: [condominiumId], references: [id], onDelete: SetNull)
   ownerSubmissionId String?
   ownerSubmission OwnerSubmission? @relation(fields: [ownerSubmissionId], references: [id], onDelete: SetNull)
   createdAt  DateTime  @default(now())
   @@index([propertyId, position])
+  @@index([condominiumId, position])
   @@index([ownerSubmissionId])
+}
+
+model Condominium {
+  id           String     @id @default(cuid())
+  name         String
+  normalizedName String
+  city         String
+  neighborhood String
+  street       String
+  number       String
+  complement   String     @default("")
+  postalCode   String     @default("")
+  description  String     @default("")
+  amenities    Json       @default("[]")
+  archived     Boolean    @default(false)
+  images       Media[]
+  properties   Property[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  @@index([normalizedName])
+  @@index([city, neighborhood])
+  @@index([archived, name])
 }
 
 model Tag {

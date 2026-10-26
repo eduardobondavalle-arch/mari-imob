@@ -147,11 +147,14 @@ export async function readMedia(key: string, allowPrivate = false) {
   assert(/^[a-f0-9-]{36}\.webp$/.test(key), 404, "Imagem não encontrada.");
   const row = await db.media.findUnique({
     where: { key },
-    include: { property: { select: { status: true } } },
+    include: {
+      property: { select: { status: true } },
+      condominium: { select: { properties: { where: { status: "published" }, select: { id: true }, take: 1 } } },
+    },
   });
   assert(row, 404, "Imagem não encontrada.");
-  let isPublic = row.property?.status === "published";
-  if (!isPublic && !row.propertyId && !row.ownerSubmissionId) {
+  let isPublic = row.property?.status === "published" || Boolean(row.condominium?.properties.length);
+  if (!isPublic && !row.propertyId && !row.ownerSubmissionId && !row.condominiumId) {
     const [settings, news] = await Promise.all([
       db.siteSettings.findUnique({
         where: { id: "main" },
@@ -201,6 +204,11 @@ export async function deleteMedia(id: string) {
     !row.ownerSubmissionId,
     409,
     "A fotografia está vinculada a uma captação de proprietário.",
+  );
+  assert(
+    !row.condominiumId,
+    409,
+    "Remova a imagem do condomínio e salve antes de excluir o arquivo.",
   );
   const content = await db.siteSettings.findUnique({ where: { id: "main" } });
   assert(

@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { adminCredentials } from "./admin-credentials";
 
-test("galeria com cinco fotos, ofertas simultâneas e parcelamento", async ({ page, baseURL }, info) => {
+test("galeria com cinco fotos, ofertas simultâneas e parcelamento", async ({ page, baseURL }) => {
   test.setTimeout(120000);
   const headers = { origin: baseURL! };
   const mediaIds: string[] = [];
@@ -80,8 +80,10 @@ test("galeria com cinco fotos, ofertas simultâneas e parcelamento", async ({ pa
     await expect(page.locator(".property-characteristics")).toBeVisible();
     await expect(page.locator(".tag-list")).toContainText("Aceita parcelamento");
     await expect(page.locator(".detail-price")).toContainText("15.000");
-    const columns = await page.locator(".property-characteristics").evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(" ").length);
-    expect(columns).toBe(info.project.name === "mobile" ? 1 : 2);
+    const layout = await page.locator(".property-characteristics").evaluate((element) => ({ display: getComputedStyle(element).display, wrap: getComputedStyle(element).flexWrap, width: element.scrollWidth, viewport: document.documentElement.clientWidth }));
+    expect(layout.display).toBe("flex");
+    expect(layout.wrap).toBe("wrap");
+    expect(layout.width).toBeLessThanOrEqual(layout.viewport);
     const sale = await (await page.request.get(`/api/properties?purpose=sale&q=${unique}`)).json();
     const rent = await (await page.request.get(`/api/properties?purpose=rent&q=${unique}`)).json();
     expect(sale.items[0].price).toBe(3800000);
